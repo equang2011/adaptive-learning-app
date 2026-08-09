@@ -23,18 +23,18 @@ def invoke_gateway(
     }
 
     try:
-            response = httpx.post(
-                "http://127.0.0.1:8000/invoke",
-                json=payload,
-                timeout=210.0,
-            )
+        response = httpx.post(
+            "http://127.0.0.1:8000/invoke",
+            json=payload,
+            timeout=550.0,
+        )
     except httpx.RequestError as err:
-        print(f"Request failed: {err}")
-        return
+        raise RuntimeError("Gateway request failed") from err
 
     if response.status_code != 200:
-        print(response.status_code, response.text)
-        return
+        raise RuntimeError(
+            f"Gateway returned {response.status_code}: {response.text}"
+        )
 
     data = response.json()
     return data["content"]

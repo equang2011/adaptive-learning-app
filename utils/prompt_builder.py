@@ -7,10 +7,6 @@ def load_prompt(path: Path, filename: str) -> str:
     return prompt_path.read_text(encoding="utf-8")
 
 
-def build_prompt(template: str, topic: str, optional_context: str = "") -> str:
+def build_prompt(template: str, **values: object) -> str:
+    return template.format(**values)
 
-
-    return template.format(
-        topic=topic,
-        optional_context=optional_context,
-    )

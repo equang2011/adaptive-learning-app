@@ -20,6 +20,7 @@ def generate_curriculum(
         prompt_template,
         topic=topic,
         optional_context=optional_context,
+        lesson_length_minutes=10,
     )
 
     content = invoke_gateway(
