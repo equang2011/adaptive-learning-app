@@ -1,3 +1,6 @@
+import bleach
+import markdown
+
 from html import escape
 from pathlib import Path
 
@@ -11,6 +14,29 @@ LESSON_FILE = LESSON_DIR / "lesson_m4-s1-l3_v1_tencent_hy3_20260808_200933.json"
 OUTPUT_FILE = ROOT / "lesson_preview.html"
 
 
+def render_markdown(text: str) -> str:
+    raw_html = markdown.markdown(
+        text,
+        extensions=['fenced_code']
+    )
+
+    return bleach.clean(
+        raw_html,
+        tags=[
+            "p",
+            "strong",
+            "em",
+            "code",
+            "pre",
+            "ul",
+            "ol",
+            "li",
+        ],
+        strip=True,
+    )
+
+
+
 def render_lesson(lesson: Lesson) -> str:
     sections_html = ""
 
@@ -18,7 +44,7 @@ def render_lesson(lesson: Lesson) -> str:
         sections_html += f"""
         <section>
             <h2>{escape(section.heading)}</h2>
-            <p>{escape(section.content)}</p>
+            {render_markdown(section.content)}
         </section>
         """
     takeaways_html = ""
@@ -35,39 +61,88 @@ def render_lesson(lesson: Lesson) -> str:
         <title>{escape(lesson.title)}</title>
 
         <style>
-            body {{
-                font-family: Arial, sans-serif;
-                max-width: 760px;
-                margin: 40px auto;
-                padding: 0 20px;
-                line-height: 1.6;
-            }}
+          body {{
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
 
-            .metadata {{
-                color: #666;
-            }}
+            max-width: 720px;
+            margin: 48px auto;
+            padding: 0 24px 64px;
+            line-height: 1.7;
+            color: #222;
+            background: #fafafa;
+        }}
 
-            .objective {{
-                padding: 16px;
-                background: #f4f4f4;
-                border-radius: 8px;
-            }}
+        h1 {{
+            font-size: 2.4rem;
+            line-height: 1.15;
+            margin-bottom: 8px;
+        }}
 
-            section {{
-                margin-top: 32px;
-            }}
+        h2 {{
+            font-size: 1.35rem;
+            margin-top: 0;
+        }}
 
-            p {{
-                white-space: pre-wrap;
-            }}
+        .metadata {{
+            color: #666;
+            margin-bottom: 24px;
+        }}
 
-            .example {{
-                margin-top: 32px;
-                padding: 16px;
-                background: #f4f4f4;
-                border-radius: 8px;
-                white-space: pre-wrap;
-            }}
+        .objective {{
+            padding: 18px;
+            margin-bottom: 32px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }}
+
+        .introduction {{
+            font-size: 1.05rem;
+            margin-bottom: 32px;
+        }}
+
+        section {{
+            margin-top: 36px;
+        }}
+
+        .example {{
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }}
+
+        code {{
+            font-family: Consolas, "Courier New", monospace;
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }}
+
+        pre {{
+            overflow-x: auto;
+            padding: 16px;
+            background: #eee;
+            border-radius: 8px;
+        }}
+
+        pre code {{
+            padding: 0;
+            background: transparent;
+        }}
+
+        ul {{
+            padding-left: 24px;
+        }}
+
+        li {{
+            margin-bottom: 8px;
+        }}
         </style>
     </head>
 
@@ -83,13 +158,15 @@ def render_lesson(lesson: Lesson) -> str:
             {escape(lesson.objective)}
         </div>
 
-        <p>{escape(lesson.introduction)}</p>
+        <div class="introduction">
+            {render_markdown(lesson.introduction)}
+        </div>
 
         {sections_html}
 
         <div class="example">
             <h2>Example</h2>
-            {escape(lesson.example)}
+            {render_markdown(lesson.example)}
         </div>
 
         <h2>Key Takeaways</h2>
