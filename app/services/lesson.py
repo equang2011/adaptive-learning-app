@@ -7,7 +7,7 @@ from utils.prompt_builder import load_prompt, build_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = ROOT / "prompts"
-PROMPT_FILE = 'lesson_v1.md'
+PROMPT_FILE = 'lesson_v1.6.md'
 
 
 def generate_lesson(

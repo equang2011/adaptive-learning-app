@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lesson.title }}</title>
+</head>
+
+<body>
+    <h1>{{ lesson.title }}</h1>
+
+    <p>
+        <strong>Objective:</strong>
+        {{ lesson.objective }}
+    </p>
+
+    <p>
+        Estimated time: {{ lesson.estimated_minutes }} minutes
+    </p>
+
+    <p>{{ lesson.introduction }}</p>
+
+    {% for section in lesson.sections %}
+    <section>
+        <h2>{{ section.heading }}</h2>
+        <p>{{ section.content }}</p>
+    </section>
+    {% endfor %}
+
+    <section>
+        <h2>Example</h2>
+        <p>{{ lesson.example }}</p>
+    </section>
+
+    <section>
+        <h2>Key Takeaways</h2>
+        <ul>
+            {% for takeaway in lesson.key_takeaways %}
+            <li>{{ takeaway }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+</body>
+
+</html>
