@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from app.models.curriculum import Curriculum
@@ -7,7 +8,7 @@ from utils.prompt_builder import load_prompt, build_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = ROOT / "prompts"
-PROMPT_FILE = 'curriculum_v4.md'
+PROMPT_FILE = os.getenv("CURRICULUM_PROMPT_VERSION", "curriculum_v4.md")
 
 def generate_curriculum(
     topic: str,

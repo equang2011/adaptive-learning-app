@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from app.clients.gateway import invoke_gateway
@@ -7,7 +8,7 @@ from utils.prompt_builder import load_prompt, build_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = ROOT / "prompts"
-PROMPT_FILE = 'lesson_v1.6.md'
+PROMPT_FILE = os.getenv("LESSON_PROMPT_VERSION", "lesson_v1.7.md")
 
 
 def generate_lesson(
