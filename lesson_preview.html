@@ -1,0 +1,177 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Retries, Idempotency, and Backoff</title>
+
+        <style>
+          body {
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            max-width: 720px;
+            margin: 48px auto;
+            padding: 0 24px 64px;
+            line-height: 1.7;
+            color: #222;
+            background: #fafafa;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            line-height: 1.15;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            margin-top: 0;
+        }
+
+        .metadata {
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .objective {
+            padding: 18px;
+            margin-bottom: 32px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+
+        .introduction {
+            font-size: 1.05rem;
+            margin-bottom: 32px;
+        }
+
+        section {
+            margin-top: 36px;
+        }
+
+        .example {
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+
+        code {
+            font-family: Consolas, "Courier New", monospace;
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        pre {
+            overflow-x: auto;
+            padding: 16px;
+            background: #eee;
+            border-radius: 8px;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        ul {
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+        </style>
+    </head>
+
+    <body>
+        <h1>Retries, Idempotency, and Backoff</h1>
+
+        <p class="metadata">
+            Estimated study time: 12 minutes
+        </p>
+
+        <div class="objective">
+            <strong>Objective:</strong>
+            Design safe retry logic with idempotent operations and exponential backoff.
+        </div>
+
+        <div class="introduction">
+            <p>In a distributed system, the obvious move after a timeout or dropped connection is to repeat the failed request. That obvious move can duplicate side effects, waste resources, or amplify an outage.</p>
+<p>This lesson shows you how to make retries safe by ensuring operations are idempotent and by spacing attempts with exponential backoff. By the end, you will be able to design retry logic that survives transient failures without corrupting state or overwhelming the services you depend on.</p>
+        </div>
+
+        
+        <section>
+            <h2>Why naive retries are dangerous</h2>
+            <p>In a distributed system, a request can fail because of a crash, an omitted message, or a network partition. Often the only signal you get is a <em>timeout</em>: the response never arrived. A timeout does not tell you whether the server processed your request before failing.</p>
+<p>If you simply retry the call, you might repeat an action that already happened. For example, a <code>POST /charge</code> that deducts money could be retried and charge the customer twice. Retries also add load exactly when a service is already struggling, which can turn a partial failure into a systemic outage.</p>
+<p>Safe retry logic must answer two questions: is it okay to repeat this operation, and how should we pace the repeats?</p>
+        </section>
+        
+        <section>
+            <h2>Idempotency: making retries safe</h2>
+            <p>An operation is <strong>idempotent</strong> if performing it multiple times has the same effect as performing it once. <code>PUT /users/123 { "name": "Ada" }</code> is idempotent: the user ends up named Ada whether the call lands once or five times. <code>POST /users</code> that creates a new record is usually not idempotent, because each call creates another user.</p>
+<p>To make a non-idempotent write safe to retry, have the client send a unique <strong>idempotency key</strong> (often a UUID) with the request. The server stores the key and the result of the first processing, then ignores or replays the result for any later request with the same key. Without server-side deduplication, the key is just a hope.</p>
+<p>As a rule of thumb: before adding a retry, confirm the operation is naturally idempotent, or design an idempotency key into the API.</p>
+        </section>
+        
+        <section>
+            <h2>Exponential backoff: pacing the retries</h2>
+            <p>Retrying immediately, or on a fixed short interval, can create a <em>retry storm</em> where many clients hammer a recovering service. <strong>Exponential backoff</strong> increases the wait after each failed attempt: wait <code>base * 2^attempt</code> seconds before the next try.</p>
+<p>Pure exponential backoff still has a problem: if many clients fail at the same time, they all retry on the same schedule and synchronize. Adding <strong>jitter</strong>—randomizing the delay, for example picking a value between 0 and the computed backoff—breaks that synchronization. Always cap the maximum delay and set a maximum number of attempts so a permanently broken dependency does not block your code forever.</p>
+        </section>
+        
+        <section>
+            <h2>Designing safe retry logic</h2>
+            <p>A safe retry strategy combines the two ideas. First, classify the error: timeouts and specific transient status codes (like HTTP 503) are retryable; client errors (400) usually are not. Second, ensure the request is idempotent or carries an idempotency key. Third, retry with exponential backoff and jitter, stopping after a defined limit.</p>
+<p>This pattern protects both your caller (it eventually succeeds or fails cleanly) and the downstream service (it is not overwhelmed). The example shows a compact Python implementation of these principles.</p>
+        </section>
+        
+
+        <div class="example">
+            <h2>Example</h2>
+            <p>A minimal Python function that retries a POST request with an idempotency key and exponential backoff plus jitter looks like this:</p>
+<pre><code>import time
+import random
+import requests
+
+def retry_post(url, payload, idempotency_key, max_attempts=5, base_delay=0.1):
+    headers = {&quot;Idempotency-Key&quot;: idempotency_key}
+    for attempt in range(max_attempts):
+        try:
+            resp = requests.post(url, json=payload, headers=headers, timeout=2.0)
+            if resp.status_code &gt;= 500:
+                # Transient or unknown server error: retry
+                pass
+            else:
+                # Success or permanent client error: do not retry
+                return resp
+        except requests.Timeout:
+            # Timeout: request may or may not have been processed,
+            # but the idempotency key protects us from duplicates.
+            pass
+        # Exponential backoff with full jitter, unless this was the last attempt
+        if attempt &lt; max_attempts - 1:
+            delay = base_delay * (2 ** attempt)
+            time.sleep(random.uniform(0, delay))
+    raise RuntimeError(&quot;Max retries exceeded&quot;)
+</code></pre>
+<p>The server must deduplicate based on <code>Idempotency-Key</code>; without that, the retry is not truly safe. The backoff doubles each attempt, and the random sleep avoids synchronized retries across many clients.</p>
+        </div>
+
+        <h2>Key Takeaways</h2>
+        <ul>
+            <li>Retrying after a timeout is unsafe unless the operation is idempotent or carries an idempotency key the server honors.</li><li>Idempotent operations produce the same result no matter how many times they are repeated, which makes them safe to retry.</li><li>Exponential backoff with jitter spreads retries out and prevents synchronized retry storms that worsen outages.</li><li>Safe retry logic distinguishes transient failures from permanent ones and limits the number of attempts.</li>
+        </ul>
+    </body>
+    </html>
+    

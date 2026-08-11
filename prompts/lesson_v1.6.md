@@ -77,6 +77,11 @@ strings that will later be converted to HTML. Follow these conventions:
   hyphen bullet lists.
 - Do not use headings, tables, images, links, or raw HTML inside prose
   fields. Headings belong only in the "heading" field.
+- Bullet lists must place each hyphenated item on its own line, with a blank
+  line before the list.
+- Fenced code blocks must begin and end on their own lines, with a blank line
+  before and after the block. The opening fence must include a language tag
+  when known.
 
 # Output
 
@@ -138,7 +143,9 @@ only for inline code.
   exceptions, and distinctions that affect whether the rule applies. Do not
   collapse multiple distinct rules into a single shorthand rule if doing so
   changes their scope or meaning.
-
 - If a conclusion depends on multiple required conditions, do not state that
   one condition alone establishes the conclusion. Examples must satisfy the
   rule as stated.
+- Ensure that every material concept explicitly named in the target objective
+  receives appropriate instructional coverage. Do not leave a required part of
+  the objective only to the introduction, example, or key takeaways.

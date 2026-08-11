@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 
@@ -9,4 +8,3 @@ def load_prompt(path: Path, filename: str) -> str:
 
 def build_prompt(template: str, **values: object) -> str:
     return template.format(**values)
-

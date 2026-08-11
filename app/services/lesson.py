@@ -4,7 +4,7 @@ from pathlib import Path
 from app.clients.gateway import invoke_gateway
 from app.models.curriculum import Curriculum, CurriculumNode
 from app.models.lesson import Lesson
-from utils.prompt_builder import load_prompt, build_prompt
+from utils.prompt_builder import build_prompt, load_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = ROOT / "prompts"
@@ -15,7 +15,7 @@ def generate_lesson(
     model: str,
     curriculum: Curriculum,
     node: CurriculumNode,
-    optional_context: str="",
+    optional_context: str = "",
 ) -> Lesson:
     if node.children:
         raise ValueError("Lesson generation requires a leaf node.")
@@ -36,11 +36,9 @@ def generate_lesson(
     print("lesson prompt length:", len(prompt))
     print("lesson prompt preview:", repr(prompt[:500]))
 
-
     content = invoke_gateway(
         model=model,
         prompt=prompt,
     )
 
     return Lesson.model_validate_json(content)
-

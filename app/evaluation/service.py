@@ -9,8 +9,12 @@ from utils.prompt_builder import build_prompt, load_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = ROOT / "prompts"
-LESSON_EVALUATOR_PROMPT_FILE = os.getenv("LESSON_EVALUATOR_PROMPT_VERSION", "lesson_evaluator_v1.md")
-CURRICULUM_EVALUATOR_PROMPT_FILE = os.getenv("CURRICULUM_EVALUATOR_PROMPT_VERSION", "curriculum_evaluator_v1.md")
+LESSON_EVALUATOR_PROMPT_FILE = os.getenv(
+    "LESSON_EVALUATOR_PROMPT_VERSION", "lesson_evaluator_v1.md"
+)
+CURRICULUM_EVALUATOR_PROMPT_FILE = os.getenv(
+    "CURRICULUM_EVALUATOR_PROMPT_VERSION", "curriculum_evaluator_v1.md"
+)
 
 
 def evaluate_lesson(
@@ -19,11 +23,7 @@ def evaluate_lesson(
     node: CurriculumNode,
 ) -> LessonEvaluation:
 
-
-    prompt_template = load_prompt(
-        PROMPT_DIR,
-        LESSON_EVALUATOR_PROMPT_FILE
-    )
+    prompt_template = load_prompt(PROMPT_DIR, LESSON_EVALUATOR_PROMPT_FILE)
 
     lesson_json = lesson.model_dump_json(indent=2)
     node_json = node.model_dump_json(indent=2)
@@ -31,7 +31,7 @@ def evaluate_lesson(
     prompt = build_prompt(
         prompt_template,
         lesson_json=lesson_json,
-        target_node_json=node.json,
+        target_node_json=node_json,
     )
 
     content = invoke_gateway(

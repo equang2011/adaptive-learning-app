@@ -9,5 +9,3 @@ app.include_router(internal_router)
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-

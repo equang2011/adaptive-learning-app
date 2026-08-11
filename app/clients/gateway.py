@@ -1,7 +1,6 @@
-
-import httpx
 import os
 
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,7 +12,6 @@ headers = {
 }
 
 
-
 def invoke_gateway(
     model: str,
     prompt: str,
@@ -21,16 +19,8 @@ def invoke_gateway(
     # Call POST /invoke
     # Handle gateway/network failure
     # Return only the normalized content string
-    
 
-    payload = {
-        "model": model,
-        "messages" : [
-            {
-                "role": "user",
-                "content": prompt}
-        ]
-    }
+    payload = {"model": model, "messages": [{"role": "user", "content": prompt}]}
 
     try:
         response = httpx.post(
@@ -43,12 +33,7 @@ def invoke_gateway(
         raise RuntimeError("Gateway request failed") from err
 
     if response.status_code != 200:
-        raise RuntimeError(
-            f"Gateway returned {response.status_code}: {response.text}"
-        )
+        raise RuntimeError(f"Gateway returned {response.status_code}: {response.text}")
 
     data = response.json()
     return data["content"]
-
-
-    

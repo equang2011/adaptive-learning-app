@@ -1,8 +1,8 @@
-import bleach
-import markdown
-
 from html import escape
 from pathlib import Path
+
+import bleach
+import markdown
 
 from app.models.lesson import Lesson
 
@@ -15,10 +15,7 @@ OUTPUT_FILE = ROOT / "lesson_preview.html"
 
 
 def render_markdown(text: str) -> str:
-    raw_html = markdown.markdown(
-        text,
-        extensions=['fenced_code']
-    )
+    raw_html = markdown.markdown(text, extensions=["fenced_code"])
 
     return bleach.clean(
         raw_html,
@@ -34,7 +31,6 @@ def render_markdown(text: str) -> str:
         ],
         strip=True,
     )
-
 
 
 def render_lesson(lesson: Lesson) -> str:
@@ -62,87 +58,87 @@ def render_lesson(lesson: Lesson) -> str:
 
         <style>
           body {{
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
+        font-family:
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
 
-            max-width: 720px;
-            margin: 48px auto;
-            padding: 0 24px 64px;
-            line-height: 1.7;
-            color: #222;
-            background: #fafafa;
-        }}
+        max-width: 720px;
+        margin: 48px auto;
+        padding: 0 24px 64px;
+        line-height: 1.7;
+        color: #222;
+        background: #fafafa;
+    }}
 
-        h1 {{
-            font-size: 2.4rem;
-            line-height: 1.15;
-            margin-bottom: 8px;
-        }}
+    h1 {{
+        font-size: 2.4rem;
+        line-height: 1.15;
+        margin-bottom: 8px;
+    }}
 
-        h2 {{
-            font-size: 1.35rem;
-            margin-top: 0;
-        }}
+    h2 {{
+        font-size: 1.35rem;
+        margin-top: 0;
+    }}
 
-        .metadata {{
-            color: #666;
-            margin-bottom: 24px;
-        }}
+    .metadata {{
+        color: #666;
+        margin-bottom: 24px;
+    }}
 
-        .objective {{
-            padding: 18px;
-            margin-bottom: 32px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        }}
+    .objective {{
+        padding: 18px;
+        margin-bottom: 32px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+    }}
 
-        .introduction {{
-            font-size: 1.05rem;
-            margin-bottom: 32px;
-        }}
+    .introduction {{
+        font-size: 1.05rem;
+        margin-bottom: 32px;
+    }}
 
-        section {{
-            margin-top: 36px;
-        }}
+    section {{
+        margin-top: 36px;
+    }}
 
-        .example {{
-            margin-top: 40px;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        }}
+    .example {{
+        margin-top: 40px;
+        padding: 20px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+    }}
 
-        code {{
-            font-family: Consolas, "Courier New", monospace;
-            background: #eee;
-            padding: 2px 5px;
-            border-radius: 4px;
-        }}
+    code {{
+        font-family: Consolas, "Courier New", monospace;
+        background: #eee;
+        padding: 2px 5px;
+        border-radius: 4px;
+    }}
 
-        pre {{
-            overflow-x: auto;
-            padding: 16px;
-            background: #eee;
-            border-radius: 8px;
-        }}
+    pre {{
+        overflow-x: auto;
+        padding: 16px;
+        background: #eee;
+        border-radius: 8px;
+    }}
 
-        pre code {{
-            padding: 0;
-            background: transparent;
-        }}
+    pre code {{
+        padding: 0;
+        background: transparent;
+    }}
 
-        ul {{
-            padding-left: 24px;
-        }}
+    ul {{
+        padding-left: 24px;
+    }}
 
-        li {{
-            margin-bottom: 8px;
-        }}
+    li {{
+        margin-bottom: 8px;
+    }}
         </style>
     </head>
 
@@ -177,6 +173,7 @@ def render_lesson(lesson: Lesson) -> str:
     </html>
     """
 
+
 def main():
     lesson_json = LESSON_FILE.read_text(encoding="utf-8")
 
@@ -184,9 +181,7 @@ def main():
 
     html = render_lesson(lesson)
 
-    OUTPUT_FILE.write_text(
-        html,
-        encoding="utf-8")
+    OUTPUT_FILE.write_text(html, encoding="utf-8")
     print("saved:", OUTPUT_FILE)
 
 

@@ -127,3 +127,9 @@ self-corrections, uncertainty, or contradictory reasoning in the final output.
 - Distinguish simplifying intuition from precise facts, rules, definitions, or
 mechanisms when that distinction matters. Do not simplify in a way that makes
 the lesson materially inaccurate.
+- When an example depends on a formal definition, rule, sequence of events, or
+success/failure condition, verify that the example satisfies those conditions.
+- Do not treat an attempted action as successfully completed unless the example
+establishes that it completed.
+- Definitions must be stated precisely enough that later explanations and examples
+do not contradict them.

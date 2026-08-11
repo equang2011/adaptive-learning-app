@@ -1,4 +1,5 @@
-import json, re
+import json
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -22,10 +23,12 @@ MODEL_FILE = ROOT / "data" / "test_inputs" / "models.json"
 
 DATA_DIR = ROOT / "data" / "generations"
 
+
 def slugify(value: str) -> str:
     value = value.lower().strip()
     value = re.sub(r"[^a-z0-9]+", "_", value)
     return value.strip("_")
+
 
 def save_curriculum(
     curriculum: Curriculum,
@@ -39,9 +42,7 @@ def save_curriculum(
     topic_slug = slugify(topic)[:40]
     model_slug = slugify(model)[:30]
 
-    filename = (
-        f"curriculum_{topic_slug}_{model_slug}_{timestamp}.json"
-    )
+    filename = f"curriculum_{topic_slug}_{model_slug}_{timestamp}.json"
 
     output_path = DATA_DIR / filename
 
@@ -52,11 +53,12 @@ def save_curriculum(
 
     return output_path
 
+
 def find_node_by_id(
     node: CurriculumNode,
     node_id: str,
 ) -> CurriculumNode | None:
-    
+
     if node.id == node_id:
         return node
 
@@ -68,9 +70,11 @@ def find_node_by_id(
 
     return None
 
+
 def load_models() -> list[dict]:
     model_json = MODEL_FILE.read_text(encoding="utf-8")
     return json.loads(model_json)
+
 
 @router.get("/internal")
 def internal_home(request: Request):
@@ -81,16 +85,19 @@ def internal_home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="internal_home.html",
-        context={"scenarios": scenarios,
-                 "models":models,},
+        context={
+            "scenarios": scenarios,
+            "models": models,
+        },
     )
+
 
 @router.post("/internal/curriculum")
 def create_curriculum(
     request: Request,
     topic: str = Form(...),
     optional_context: str = Form(""),
-    model:str = Form(...),
+    model: str = Form(...),
 ):
 
     curriculum = generate_curriculum(
@@ -99,11 +106,7 @@ def create_curriculum(
         optional_context=optional_context,
     )
 
-    saved_path = save_curriculum(
-        curriculum=curriculum,
-        topic=topic,
-        model=model
-    )
+    saved_path = save_curriculum(curriculum=curriculum, topic=topic, model=model)
 
     return templates.TemplateResponse(
         request=request,
@@ -117,7 +120,6 @@ def create_curriculum(
     )
 
 
-
 @router.post("/internal/lesson")
 def create_lesson(
     request: Request,
@@ -127,13 +129,11 @@ def create_lesson(
 ):
     curriculum_path = DATA_DIR / curriculum_filename
 
-    curriculum_string = curriculum_path.read_text(
-    encoding="utf-8"
-    )
+    curriculum_string = curriculum_path.read_text(encoding="utf-8")
     curriculum = Curriculum.model_validate_json(curriculum_string)
 
     target_node = None
-    
+
     for node in curriculum.nodes:
         target_node = find_node_by_id(node, node_id)
         if target_node is not None:
@@ -141,7 +141,6 @@ def create_lesson(
     if target_node is None:
         raise ValueError(f"Node not found: {node_id}")
 
-   
     lesson = generate_lesson(
         model=lesson_model,
         curriculum=curriculum,
@@ -149,17 +148,13 @@ def create_lesson(
     )
 
     return templates.TemplateResponse(
-    request=request,
-    name="curriculum.html",
-    context={
-        "curriculum": curriculum,
-        "curriculum_filename": curriculum_filename,
-        "models": load_models(),
-        "lesson": lesson,
-        "selected_node_id": node_id,
-    },
-)
-    
-
-
-    
+        request=request,
+        name="curriculum.html",
+        context={
+            "curriculum": curriculum,
+            "curriculum_filename": curriculum_filename,
+            "models": load_models(),
+            "lesson": lesson,
+            "selected_node_id": node_id,
+        },
+    )

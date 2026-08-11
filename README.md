@@ -88,6 +88,22 @@ Templates use Python `str.format()` placeholders (e.g. `{curriculum_json}`,
 `{lesson_length_minutes}`). Literal JSON braces inside a template must be
 doubled (`{{` / `}}`) to survive formatting.
 
+## Evaluation
+
+Generated curricula and lessons can be evaluated by separate LLM-based
+evaluators. Evaluation is intentionally kept separate from generation: a
+generated artifact is treated as input to an evaluator prompt and parsed into
+a structured Pydantic evaluation object.
+
+The initial evaluation flow is:
+
+```text
+saved curriculum or lesson
+  → versioned evaluator prompt
+  → LLM Gateway
+  → validated evaluation object
+  → saved evaluation JSON
+
 ## Testing
 
 ```bash

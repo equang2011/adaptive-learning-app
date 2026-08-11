@@ -3,11 +3,9 @@ from pathlib import Path
 
 from app.models.curriculum import Curriculum, CurriculumNode
 from app.models.lesson import Lesson
-
 from app.services.lesson import generate_lesson
 
-
-MODEL = 'tencent/hy3'
+MODEL = "tencent/hy3"
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -18,11 +16,12 @@ CURRICULUM_FILE = CURRICULUM_DIR / "curriculum_20260808_183819.json"
 
 TARGET_NODE_ID = "m4-s1-l3"
 
+
 def find_node_by_id(
     node: CurriculumNode,
     node_id: str,
 ) -> CurriculumNode | None:
-    
+
     if node.id == node_id:
         return node
 
@@ -35,26 +34,17 @@ def find_node_by_id(
     return None
 
 
-def save_lesson(
-        lesson: Lesson,
-        node: CurriculumNode,
-        model: str
-    ) -> Path:
+def save_lesson(lesson: Lesson, node: CurriculumNode, model: str) -> Path:
     LESSON_DIR.mkdir(parents=True, exist_ok=True)
 
     model_slug = model.replace("/", "_")[:20]
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = (
-    f"lesson_{node.id}_v1_{model_slug}_{timestamp}.json"
-)
-  
+    filename = f"lesson_{node.id}_v1_{model_slug}_{timestamp}.json"
+
     output_path = LESSON_DIR / filename
     json_lesson = lesson.model_dump_json(indent=2)
 
-    output_path.write_text(
-        json_lesson,
-        encoding="utf-8"
-    )
+    output_path.write_text(json_lesson, encoding="utf-8")
 
     return output_path
 
@@ -84,7 +74,6 @@ def main():
 
     saved_path = save_lesson(lesson=lesson, node=target_node, model=MODEL)
     print("saved:", saved_path)
-
 
 
 if __name__ == "__main__":
