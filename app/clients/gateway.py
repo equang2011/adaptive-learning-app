@@ -1,6 +1,16 @@
 
 import httpx
+import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+gateway_api_key = os.getenv("LLM_GATEWAY_API_KEY")
+
+headers = {
+    "Authorization": f"Bearer {gateway_api_key}",
+}
 
 
 
@@ -24,8 +34,9 @@ def invoke_gateway(
 
     try:
         response = httpx.post(
-            "http://127.0.0.1:8000/invoke",
+            "https://llm-gateway-production-b085.up.railway.app/invoke",
             json=payload,
+            headers=headers,
             timeout=550.0,
         )
     except httpx.RequestError as err:
