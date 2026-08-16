@@ -8,7 +8,7 @@ from app.models.lesson import Lesson
 from utils.prompt_builder import build_prompt, load_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
-PROMPT_DIR = ROOT / "prompts"
+PROMPT_DIR = ROOT / "app" / "evaluation" / "prompts"
 LESSON_EVALUATOR_PROMPT_FILE = os.getenv(
     "LESSON_EVALUATOR_PROMPT_VERSION", "lesson_evaluator_v1.md"
 )
