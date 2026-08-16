@@ -1,7 +1,9 @@
 import json
+import time
 from datetime import datetime
 from pathlib import Path
 
+from app.evaluation.scripts.batch_utils import find_latest_run_dir, load_summary, write_summary
 from app.services.curriculum import generate_curriculum
 
 
@@ -12,25 +14,8 @@ MODEL = "deepseek/deepseek-v4-flash-0731"
 GENERATIONS_DIR = ROOT / "data" / "generations"
 
 
-def find_latest_run_dir() -> Path | None:
-    batches = sorted(GENERATIONS_DIR.glob("batch_*"))
-    return batches[-1] if batches else None
-
-
-def load_summary(run_dir: Path) -> list[dict]:
-    summary_path = run_dir / "_summary.json"
-    if summary_path.exists():
-        return json.loads(summary_path.read_text(encoding="utf-8"))
-    return []
-
-
-def write_summary(run_dir: Path, summary: list[dict]) -> None:
-    summary_path = run_dir / "_summary.json"
-    summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-
-
 def main():
-    existing_run = find_latest_run_dir()
+    existing_run = find_latest_run_dir(GENERATIONS_DIR)
 
     if existing_run is not None:
         run_dir = existing_run
@@ -59,6 +44,7 @@ def main():
 
         print(f"[{scenario_id}] generating...")
 
+        start = time.perf_counter()
         try:
             curriculum = generate_curriculum(
                 topic=test_case["topic"],
@@ -66,16 +52,20 @@ def main():
                 model=MODEL,
             )
         except Exception as err:
+            elapsed = time.perf_counter() - start
             print(f"[{scenario_id}] FAILED: {err}")
-            summary.append({"scenario_id": scenario_id, "status": "failed", "error": str(err)})
+            summary.append({"scenario_id": scenario_id, "status": "failed", "error": str(err), "elapsed_seconds": round(elapsed,1)})
             write_summary(run_dir, summary)
             continue
 
+        elapsed = round(time.perf_counter() - start, 1)
+        
         record = {
             "scenario_id": scenario_id,
             "topic": test_case["topic"],
             "optional_context": test_case["optional_context"],
             "model": MODEL,
+            "elapsed_seconds": elapsed,
             "curriculum": curriculum.model_dump(),
         }
 
@@ -83,7 +73,7 @@ def main():
         output_path.write_text(json.dumps(record, indent=2), encoding="utf-8")
 
         print(f"[{scenario_id}] saved: {output_path.name}")
-        summary.append({"scenario_id": scenario_id, "status": "success", "file": output_path.name})
+        summary.append({"scenario_id": scenario_id, "status": "success", "file": output_path.name, "elapsed_seconds": elapsed})
         write_summary(run_dir, summary)
 
     print(f"\nRun complete: {run_dir}")
