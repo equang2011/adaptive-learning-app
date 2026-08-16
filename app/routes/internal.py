@@ -6,8 +6,8 @@ from pathlib import Path
 from fastapi import APIRouter, Form, Request
 from fastapi.templating import Jinja2Templates
 
-from app.models.curriculum import Curriculum, CurriculumNode
-from app.services.curriculum import generate_curriculum
+from app.models.curriculum import Curriculum
+from app.services.curriculum import find_node_by_id, generate_curriculum
 from app.services.lesson import generate_lesson
 
 router = APIRouter()
@@ -52,23 +52,6 @@ def save_curriculum(
     )
 
     return output_path
-
-
-def find_node_by_id(
-    node: CurriculumNode,
-    node_id: str,
-) -> CurriculumNode | None:
-
-    if node.id == node_id:
-        return node
-
-    for child in node.children:
-        result = find_node_by_id(child, node_id)
-
-        if result is not None:
-            return result
-
-    return None
 
 
 def load_models() -> list[dict]:
