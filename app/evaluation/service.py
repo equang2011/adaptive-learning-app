@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 
 from app.clients.gateway import invoke_gateway
-from app.evaluation.models import LessonEvaluation
-from app.models.curriculum import CurriculumNode
+from app.evaluation.models import LessonEvaluation, CurriculumEvaluation
+from app.models.curriculum import CurriculumNode, Curriculum
 from app.models.lesson import Lesson
 from utils.prompt_builder import build_prompt, load_prompt
 
@@ -40,3 +40,23 @@ def evaluate_lesson(
     )
 
     return LessonEvaluation.model_validate_json(content)
+
+def evaluate_curriculum(
+    model:str,
+    curriculum:Curriculum,
+    topic: str,
+    optional_context: str = "",
+) -> CurriculumEvaluation:
+
+    prompt_template = load_prompt(PROMPT_DIR, CURRICULUM_EVALUATOR_PROMPT_FILE)
+
+    curriculum_json = curriculum.model_dump_json(indent=2)
+
+    prompt = build_prompt(prompt_template, topic=topic, optional_context=optional_context, curriculum_json=curriculum_json)
+
+    content = invoke_gateway(
+        model=model,
+        prompt=prompt,
+    )
+    
+    return CurriculumEvaluation.model_validate_json(content)
