@@ -30,7 +30,7 @@ class LessonEvaluation(BaseModel):
     internal_consistency: int = Field(ge=1, le=5)
     lesson_granularity: int = Field(ge=1, le=5)
 
-    overall_score: int = Field(ge=1, le=5)
+    overall_score: float = Field(ge=1, le=5)
 
     issues: list[LessonEvaluationIssue]
     summary: str
@@ -43,7 +43,7 @@ class CurriculumEvaluation(BaseModel):
     redundancy: int = Field(ge=1, le=5)
     learner_context_fit: int = Field(ge=1, le=5)
     structural_coherence: int = Field(ge=1, le=5)
-    overall_score: int = Field(ge=1, le=5)
+    overall_score: float = Field(ge=1, le=5)
     strengths: list[str]
     issues: list[CurriculumEvaluationIssue]
     summary: str
