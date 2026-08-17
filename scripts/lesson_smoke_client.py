@@ -2,19 +2,19 @@ from datetime import datetime
 from pathlib import Path
 
 from app.models.curriculum import Curriculum, CurriculumNode
-from app.models.lesson import Lesson
-from app.services.lesson import generate_lesson
+from app.models.lesson import PaginatedLesson
+from app.services.lesson import generate_paginated_lesson
 
-MODEL = "tencent/hy3"
+MODEL = "openai/gpt-5.6-luna"
 
 ROOT = Path(__file__).resolve().parents[1]
 
 CURRICULUM_DIR = ROOT / "data" / "generations"
 LESSON_DIR = ROOT / "data" / "lessons"
 
-CURRICULUM_FILE = CURRICULUM_DIR / "curriculum_20260808_183819.json"
+CURRICULUM_FILE = CURRICULUM_DIR / "backend_fundamentals_002.json"
 
-TARGET_NODE_ID = "m4-s1-l3"
+TARGET_NODE_ID = "logging"
 
 
 def find_node_by_id(
@@ -34,7 +34,11 @@ def find_node_by_id(
     return None
 
 
-def save_lesson(lesson: Lesson, node: CurriculumNode, model: str) -> Path:
+def save_lesson(
+    lesson: PaginatedLesson,
+    node: CurriculumNode,
+    model: str,
+) -> Path:
     LESSON_DIR.mkdir(parents=True, exist_ok=True)
 
     model_slug = model.replace("/", "_")[:20]
@@ -65,7 +69,7 @@ def main():
 
     print(target_node)
 
-    lesson = generate_lesson(
+    lesson = generate_paginated_lesson(
         model=MODEL,
         curriculum=curriculum,
         node=target_node,

@@ -6,6 +6,8 @@ Target curriculum node:
 Generated lesson:
 {lesson_json}
 
+The generated lesson may contain multiple pages. Evaluate the complete assembled lesson as one learning experience, including consistency, sequencing, and unnecessary repetition across pages.
+
 Evaluate only the lesson against the target node and the rubric below. You are
 given only the target node, not the full curriculum, so judge scope against the
 target objective itself; do not penalize the lesson for not covering material
