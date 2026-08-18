@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -6,6 +7,7 @@ from app.models.lesson import PaginatedLesson
 from app.services.lesson import generate_paginated_lesson
 
 MODEL = "openai/gpt-5.6-luna"
+DETAIL_LEVEL = os.getenv("LESSON_DETAIL_LEVEL", "standard")
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -73,6 +75,7 @@ def main():
         model=MODEL,
         curriculum=curriculum,
         node=target_node,
+        detail_level=DETAIL_LEVEL,
     )
     print(lesson.model_dump_json(indent=2))
 

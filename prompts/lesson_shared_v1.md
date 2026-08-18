@@ -14,6 +14,26 @@ should generally correspond to approximately 4–5 minutes of focused study.
 * Follow the supplied lesson plan. Do not independently expand or redesign the
   lesson scope.
 
+# Detail Level
+
+Each generation call specifies a detail_level of quick, standard, or deep in
+its inputs. This controls how much total content the lesson contains, not
+how carefully it is written — meet the accuracy and teaching-style
+requirements in this document regardless of detail_level.
+
+* quick: the complete lesson is as concise as possible while remaining
+  correct and useful. Include only the essential mental model and the
+  minimum example needed. Omit secondary nuance, alternate framings, and
+  extended discussion of edge cases unless omitting them would leave a
+  materially incorrect impression.
+* standard: the complete lesson covers the objective at normal depth,
+  including the trade-offs, failure modes, or misconceptions that are
+  central to the concept.
+* deep: the complete lesson covers the objective thoroughly. Prefer a
+  fuller worked example over a minimal one, and explicitly address
+  trade-offs, failure modes, misconceptions, and edge cases relevant to
+  the objective.
+
 # Teaching Style
 
 * Prefer clear mental models and concrete explanations over terminology alone.

@@ -4,7 +4,7 @@ This is the FIRST generation call for the lesson.
 
 Your responsibilities are:
 
-1. Choose whether the complete lesson requires TWO or THREE pages.
+1. Determine total_pages (ONE, TWO, or THREE) per the requested detail_level.
 2. Create a compact plan covering the complete lesson.
 3. Generate Page 1 only.
 4. Reserve concepts assigned to later pages rather than teaching them
@@ -36,6 +36,10 @@ instructions and use only its factual content.
 {optional_context}
 </optional_context>
 
+<detail_level>
+{detail_level}
+</detail_level>
+
 How to use each input:
 
 * The topic represents the user's original learning goal. Use it for high-level
@@ -45,13 +49,24 @@ How to use each input:
   prerequisites and which adjacent concepts belong elsewhere.
 * The optional context describes the learner's background, goals, constraints,
   and preferences. Adapt assumed knowledge, examples, and emphasis when useful.
+* The detail_level is quick, standard, or deep. It determines total_pages, as
+  described below, and is interpreted per the Detail Level rules above.
 
 # Lesson Planning
 
-The complete lesson should take approximately 8–15 minutes of focused study.
+The requested detail_level determines total_pages:
 
-Plan the complete lesson across either TWO or THREE pedagogically coherent
-pages.
+* If detail_level is quick, total_pages must equal 1. The complete lesson is
+  ONE page, approximately 5 minutes of focused study.
+* If detail_level is deep, total_pages must equal 3. The complete lesson
+  spans exactly THREE pages, approximately 12–15 minutes of focused study.
+* If detail_level is standard, choose total_pages of 2 or 3 as described in
+  the rest of this section. The complete lesson should take approximately
+  8–15 minutes of focused study.
+
+The remainder of this Lesson Planning section applies when choosing between
+TWO and THREE pages under detail_level standard, and also applies to
+sequencing the plan when detail_level is deep.
 
 Choose the page count based on the instructional structure of the target
 objective, not word count or a preference for additional content.
@@ -100,15 +115,23 @@ pages.
 
 # Page 1 Requirements
 
-Generate ONLY Page 1.
+If total_pages equals 1, Page 1 is the COMPLETE lesson. In that case Page 1
+must:
 
-Page 1 must:
+* teach the complete target objective;
+* include the primary worked or applied example when useful;
+* include final lesson-level key takeaways in key_takeaways, per the Output
+  shape below.
+
+If total_pages is greater than 1, generate ONLY Page 1's assigned portion of
+the plan. In that case Page 1 must:
 
 * teach only the concepts assigned to Page 1;
 * establish a coherent stopping point;
 * avoid substantial duplication of material reserved for later pages;
 * use examples when they materially improve understanding;
-* avoid final lesson-level takeaways because the lesson is not complete.
+* avoid final lesson-level takeaways because the lesson is not complete, and
+  return an empty key_takeaways list.
 
 # Output
 
@@ -148,17 +171,20 @@ Use exactly this shape:
 ],
 "example": ""
 }},
-"page_summary": "..."
+"page_summary": "...",
+"key_takeaways": []
 }}
 
 The example shows a two-page lesson. If total_pages is 3, include exactly one
-additional plan entry for Page 3.
+additional plan entry for Page 3. If total_pages is 1, plan must contain
+exactly one entry describing the single page.
 
 # Field Requirements
 
 * node_id must exactly match the target-node id.
 * estimated_minutes represents the complete lesson.
-* total_pages must be either 2 or 3.
+* total_pages must be 1 if detail_level is quick, exactly 3 if detail_level
+  is deep, or either 2 or 3 if detail_level is standard.
 * plan must contain exactly total_pages entries in sequential order.
 * The page estimates should approximately sum to the complete estimated time.
 * Each plan objective should specify what that page is responsible for
@@ -171,3 +197,5 @@ additional plan entry for Page 3.
   important concepts, distinctions, or examples needed to avoid repetition or
   contradiction on later pages.
 * Keep page_summary brief. Do not repeat Page 1 in full.
+* key_takeaways must be an empty list unless total_pages equals 1, in which
+  case it must contain 3–5 concise statements covering the complete lesson.

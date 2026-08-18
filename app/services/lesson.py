@@ -4,7 +4,13 @@ from pathlib import Path
 
 from app.clients.gateway import invoke_gateway
 from app.models.curriculum import Curriculum, CurriculumNode
-from app.models.lesson import Lesson, LessonContinuation, LessonStart, PaginatedLesson
+from app.models.lesson import (
+    DetailLevel,
+    Lesson,
+    LessonContinuation,
+    LessonStart,
+    PaginatedLesson,
+)
 from utils.prompt_builder import build_prompt, compose_prompts, load_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +25,12 @@ LESSON_PROMPT_VERSION = os.getenv("LESSON_PROMPT_VERSION", "v1")
 SHARED_PROMPT_FILE = f"lesson_shared_{LESSON_PROMPT_VERSION}.md"
 PAGE1_PROMPT_FILE = f"lesson_page1_{LESSON_PROMPT_VERSION}.md"
 CONTINUATION_PROMPT_FILE = f"lesson_continue_{LESSON_PROMPT_VERSION}.md"
+
+EXPECTED_TOTAL_PAGES: dict[DetailLevel, set[int]] = {
+    "quick": {1},
+    "standard": {2, 3},
+    "deep": {3},
+}
 
 def generate_lesson(
     model: str,
@@ -55,10 +67,11 @@ def generate_lesson(
 
 
 def generate_paginated_lesson(
-        model: str,
-        curriculum: Curriculum,
-        node: CurriculumNode,
-        optional_context: str= "",
+    model: str,
+    curriculum: Curriculum,
+    node: CurriculumNode,
+    optional_context: str = "",
+    detail_level: DetailLevel = "standard",
 ) -> PaginatedLesson:
     if node.children:
         raise ValueError("Lesson generation requires a leaf node.")
@@ -76,6 +89,7 @@ def generate_paginated_lesson(
         curriculum_json=curriculum_json,
         target_node_json=node_json,
         optional_context=optional_context,
+        detail_level=detail_level,
     )
 
     content_page1 = invoke_gateway(
@@ -84,9 +98,11 @@ def generate_paginated_lesson(
     )
     start = LessonStart.model_validate_json(content_page1)
 
-    if start.total_pages not in {2, 3}:
+    expected_pages = EXPECTED_TOTAL_PAGES[detail_level]
+    if start.total_pages not in expected_pages:
         raise ValueError(
-            f"Expected 2 or 3 lesson pages, got {start.total_pages}"
+            f"Expected total_pages in {expected_pages} for "
+            f"detail_level={detail_level!r}, got {start.total_pages}"
         )
     lesson = PaginatedLesson(
         node_id=start.node_id,
@@ -97,10 +113,9 @@ def generate_paginated_lesson(
         plan=start.plan,
         pages=[start.page],
         page_summaries=[start.page_summary],
-        key_takeaways=[],
+        key_takeaways=start.key_takeaways if start.total_pages == 1 else [],
     )
 
-    shared = load_prompt(PROMPT_DIR, SHARED_PROMPT_FILE)
     continuation = load_prompt(PROMPT_DIR, CONTINUATION_PROMPT_FILE)
     prompt_template = compose_prompts(shared, continuation)
 
@@ -123,6 +138,7 @@ def generate_paginated_lesson(
             total_pages=start.total_pages,
             lesson_plan_json=lesson_plan_json,
             prior_page_summaries_json=prior_page_summaries_json,
+            detail_level=detail_level,
         )
         
         content = invoke_gateway(

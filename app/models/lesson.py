@@ -31,6 +31,9 @@ class LessonGenerationRecord(BaseModel):
     validation_status: Literal["not_attempted", "passed", "failed"]
     lesson: Lesson | None
 
+DetailLevel = Literal["quick", "standard", "deep"]
+
+
 class LessonPagePlan(BaseModel):
     page_number: int
     title: str
@@ -55,6 +58,7 @@ class LessonStart(BaseModel):
     plan: list[LessonPagePlan]
     page: LessonPage
     page_summary: str
+    key_takeaways: list[str] = Field(default_factory=list)
 
 
 class LessonContinuation(BaseModel):

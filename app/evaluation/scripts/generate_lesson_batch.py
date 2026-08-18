@@ -12,6 +12,7 @@ MODEL = os.getenv(
     "LESSON_MODEL",
     "openai/gpt-5.6-luna",
 )
+DETAIL_LEVEL = os.getenv("LESSON_DETAIL_LEVEL", "standard")
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -68,6 +69,7 @@ def main():
             curriculum=curriculum,
             node=target_node,
             optional_context=curriculum_record.get("optional_context", ""),
+            detail_level=DETAIL_LEVEL,
         )
 
         print(
