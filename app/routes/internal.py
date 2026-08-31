@@ -12,6 +12,7 @@ from app.models.lesson import PaginatedLesson
 from app.services.curriculum import find_node_by_id, generate_curriculum
 from app.services.lesson import generate_paginated_lesson
 from app.services.rate_limit import check_and_increment
+from utils.markdown_render import render_markdown
 
 router = APIRouter()
 
@@ -20,6 +21,7 @@ TEMPLATE_DIR = ROOT / "app" / "templates"
 
 
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
+templates.env.filters["markdown"] = render_markdown
 
 CONFIG_DIR = ROOT / "app" / "config"
 SCENARIO_FILE = CONFIG_DIR / "curriculum_scenarios.json"

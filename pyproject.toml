@@ -3,9 +3,11 @@ name = "adaptive-learning-app"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "bleach",
     "fastapi",
     "httpx",
     "jinja2",
+    "markdown",
     "pydantic-settings",
     "python-dotenv",
     "python-multipart",

@@ -1,0 +1,291 @@
+{% macro render_nodes(nodes, prefix="") %}
+{% for node in nodes %}
+{% if loop.last %}
+{% set connector = "└── " %}
+{% else %}
+{% set connector = "├── " %}
+{% endif %}
+
+<div class="tree-line">
+    <span class="tree-prefix">{{ prefix }}{{ connector }}</span>
+
+    {% if node.children %}
+    <span class="tree-title">{{ node.title }}</span>
+    {% else %}
+    <label class="leaf-node">
+        <input type="radio" name="node_id" value="{{ node.id }}" required>
+        <span class="tree-title">{{ node.title }}</span>
+    </label>
+    {% endif %}
+</div>
+
+{% if node.children %}
+{% if loop.last %}
+{% set child_prefix = prefix ~ " " %}
+{% else %}
+{% set child_prefix = prefix ~ "│ " %}
+{% endif %}
+
+{{ render_nodes(node.children, child_prefix) }}
+{% endif %}
+{% endfor %}
+{% endmacro %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ curriculum.title }}</title>
+
+    <style>
+        body {
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 24px;
+            line-height: 1.6;
+        }
+
+        .tree {
+            margin-top: 28px;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        .tree-line {
+            display: flex;
+            align-items: center;
+            min-height: 30px;
+        }
+
+        .tree-prefix {
+            color: #888;
+            white-space: pre;
+            flex-shrink: 0;
+        }
+
+        .tree-title {
+            font-weight: 500;
+        }
+
+        .leaf-node {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .leaf-node input {
+            margin: 0;
+        }
+
+        button {
+            margin-top: 28px;
+            padding: 10px 18px;
+            cursor: pointer;
+        }
+
+        .pager-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .pager-controls button {
+            margin-top: 0;
+        }
+
+        .pager-controls button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        #page-indicator {
+            font-weight: 500;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <details {% if lesson is none %}open{% endif %}>
+        <summary><strong>Curriculum</strong></summary>
+
+        <form method="post" action="/internal/lesson">
+
+            <input type="hidden" name="curriculum_filename" value="{{ curriculum_filename }}">
+
+            <div class="tree">
+                {{ render_nodes(curriculum.nodes) }}
+            </div>
+
+            <label for="lesson_model">Lesson model</label>
+
+            <select id="lesson_model" name="lesson_model" required>
+                {% for model in models %}
+                <option value="{{ model.id }}">
+                    {{ model.label }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <label for="detail_level">Detail level</label>
+
+            <select id="detail_level" name="detail_level" required>
+                <option value="quick">Quick (~5 min, 1 page)</option>
+                <option value="standard" selected>Standard (~8-15 min, 2-3 pages)</option>
+                <option value="deep">Deep (~12-15 min, 3 pages)</option>
+            </select>
+
+            <button type="submit">
+                Generate Lesson
+            </button>
+
+        </form>
+    </details>
+
+
+    {% if lesson %}
+    <div class="lesson">
+        <h1>{{ lesson.title }}</h1>
+
+        <p class="metadata">
+            Estimated study time: {{ lesson.estimated_minutes }} minutes
+        </p>
+
+        <div class="objective">
+            <strong>Objective:</strong>
+            {{ lesson.objective }}
+        </div>
+
+        <div class="pager-controls">
+            <button type="button" id="prev-page" disabled>&larr; Previous</button>
+            <span id="page-indicator"></span>
+            <button type="button" id="next-page">Next &rarr;</button>
+        </div>
+
+        {% for page in lesson.pages %}
+        <div class="lesson-page" data-page-number="{{ page.page_number }}" {% if not loop.first %}hidden{% endif %}>
+            <h2>{{ page.title }}</h2>
+
+            <div class="introduction">
+                <p>{{ page.introduction }}</p>
+            </div>
+
+            {% for section in page.sections %}
+            <section>
+                <h2>{{ section.heading }}</h2>
+                <p>{{ section.content }}</p>
+            </section>
+            {% endfor %}
+
+            {% if page.example %}
+            <div class="example">
+                <h2>Example</h2>
+                <p>{{ page.example }}</p>
+            </div>
+            {% endif %}
+
+            {% if loop.last and lesson.key_takeaways %}
+            <div class="key-takeaways">
+                <h2>Key Takeaways</h2>
+                <ul>
+                    {% for takeaway in lesson.key_takeaways %}
+                    <li>{{ takeaway }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        (function () {
+            const pages = Array.from(document.querySelectorAll(".lesson-page"));
+            if (pages.length === 0) return;
+
+            const prevBtn = document.getElementById("prev-page");
+            const nextBtn = document.getElementById("next-page");
+            const indicator = document.getElementById("page-indicator");
+            let current = 0;
+
+            function render() {
+                pages.forEach((page, index) => {
+                    page.hidden = index !== current;
+                });
+                prevBtn.disabled = current === 0;
+                nextBtn.disabled = current === pages.length - 1;
+                indicator.textContent = `Page ${current + 1} of ${pages.length}`;
+            }
+
+            prevBtn.addEventListener("click", () => {
+                if (current > 0) {
+                    current -= 1;
+                    render();
+                }
+            });
+
+            nextBtn.addEventListener("click", () => {
+                if (current < pages.length - 1) {
+                    current += 1;
+                    render();
+                }
+            });
+
+            render();
+        })();
+    </script>
+    {% endif %}
+</body>
+
+</html>
+
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 24px;
+    }
+
+    .tree {
+        margin-top: 28px;
+        font-family: Consolas, "Courier New", monospace;
+    }
+
+    .tree-line {
+        display: flex;
+        align-items: center;
+        min-height: 30px;
+    }
+
+    .tree-prefix {
+        color: #888;
+        white-space: pre;
+        flex-shrink: 0;
+    }
+
+    .tree-title {
+        font-weight: 500;
+    }
+
+    .leaf-node {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .leaf-node input {
+        margin: 0;
+    }
+</style>

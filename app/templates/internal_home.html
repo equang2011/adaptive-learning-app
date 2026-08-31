@@ -3,65 +3,82 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Curriculum Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Learning — New Curriculum</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 
 <body>
-    <h1>Curriculum Generator</h1>
+    <header class="topbar">
+        <span class="brand">
+            <span class="brand-mark">A</span>
+            Adaptive Learning
+        </span>
+    </header>
 
-    <form method="post" action="/internal/curriculum">
+    <div class="create-shell">
+        <h1>What do you want to learn?</h1>
+        <p class="subtitle">
+            Give it a topic and, optionally, a bit about your background or
+            goals. It'll build a curriculum you can generate lessons from.
+        </p>
 
-        <label for="scenario">Test Scenario</label>
+        <div class="create-card">
+            <form method="post" action="/internal/curriculum">
+                <label class="field-label" for="topic">Topic</label>
+                <input id="topic" name="topic" type="text" required
+                    placeholder="e.g. SQL window functions">
 
-        <select id="scenario">
-            <option value="">Custom</option>
+                <label class="field-label" for="optional_context">Your background (optional)</label>
+                <textarea id="optional_context" name="optional_context"
+                    placeholder="What you already know, what you're trying to do with this..."></textarea>
 
-            {% for scenario in scenarios %}
-            <option value="{{ loop.index0 }}" data-topic="{{ scenario.topic }}"
-                data-context="{{ scenario.optional_context }}">
-                {{ scenario.id }}
-            </option>
-            {% endfor %}
-        </select>
+                <label class="field-label" for="model">Model</label>
+                <select id="model" name="model" required>
+                    {% for model in models %}
+                    <option value="{{ model.id }}">
+                        {{ model.label }}
+                    </option>
+                    {% endfor %}
+                </select>
 
-        <label for="topic">Topic</label>
-        <input id="topic" name="topic" type="text" required>
+                <button class="primary-button" type="submit" style="margin-top: 20px;">
+                    Generate Curriculum
+                </button>
 
-        <label for="optional_context">Context</label>
-        <textarea id="optional_context" name="optional_context"></textarea>
+                <details class="dev-options">
+                    <summary>Developer: load a saved test scenario</summary>
+                    <label class="field-label" for="scenario">Test Scenario</label>
+                    <select id="scenario">
+                        <option value="">Custom</option>
+                        {% for scenario in scenarios %}
+                        <option value="{{ loop.index0 }}" data-topic="{{ scenario.topic }}"
+                            data-context="{{ scenario.optional_context }}">
+                            {{ scenario.id }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </details>
+            </form>
+        </div>
+    </div>
 
-        <label for="model">Model</label>
+    <script>
+        const scenarioSelect = document.getElementById("scenario");
+        const topicInput = document.getElementById("topic");
+        const contextInput = document.getElementById("optional_context");
 
-        <select id="model" name="model" required>
-            {% for model in models %}
-            <option value="{{ model.id }}">
-                {{ model.label }}
-            </option>
-            {% endfor %}
-        </select>
+        scenarioSelect.addEventListener("change", () => {
+            const option = scenarioSelect.options[scenarioSelect.selectedIndex];
 
-        <button type="submit">
-            Generate Curriculum
-        </button>
+            if (!option.value) {
+                return;
+            }
 
-    </form>
+            topicInput.value = option.dataset.topic;
+            contextInput.value = option.dataset.context;
+        });
+    </script>
 </body>
 
 </html>
-
-<script>
-    const scenarioSelect = document.getElementById("scenario");
-    const topicInput = document.getElementById("topic");
-    const contextInput = document.getElementById("optional_context");
-
-    scenarioSelect.addEventListener("change", () => {
-        const option = scenarioSelect.options[scenarioSelect.selectedIndex];
-
-        if (!option.value) {
-            return;
-        }
-
-        topicInput.value = option.dataset.topic;
-        contextInput.value = option.dataset.context;
-    });
-</script>
