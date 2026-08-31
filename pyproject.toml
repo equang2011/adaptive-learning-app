@@ -5,7 +5,10 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi",
     "httpx",
+    "jinja2",
     "pydantic-settings",
+    "python-dotenv",
+    "python-multipart",
     "uvicorn[standard]",
 ]
 
