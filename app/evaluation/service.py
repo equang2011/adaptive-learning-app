@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 
 from app.clients.gateway import invoke_gateway
-from app.evaluation.models import LessonEvaluation, CurriculumEvaluation
-from app.models.curriculum import CurriculumNode, Curriculum
+from app.evaluation.models import CurriculumEvaluation, LessonEvaluation
+from app.models.curriculum import Curriculum, CurriculumNode
 from app.models.lesson import Lesson
 from utils.prompt_builder import build_prompt, load_prompt
 

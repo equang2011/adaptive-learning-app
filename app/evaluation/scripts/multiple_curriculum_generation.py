@@ -1,11 +1,14 @@
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
-from app.evaluation.scripts.batch_utils import find_latest_run_dir, load_summary, write_summary
+from app.evaluation.scripts.batch_utils import (
+    find_latest_run_dir,
+    load_summary,
+    write_summary,
+)
 from app.services.curriculum import generate_curriculum
-
 
 ROOT = Path(__file__).resolve().parents[3]
 CURRICULUM_INPUTS = ROOT / "data" / "test_inputs" / "curriculum_test_cases_1.json"
@@ -22,7 +25,7 @@ def main():
         summary = load_summary(run_dir)
         print(f"Resuming run: {run_dir.name}")
     else:
-        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         run_dir = GENERATIONS_DIR / f"batch_{run_id}"
         run_dir.mkdir(parents=True, exist_ok=True)
         summary = []

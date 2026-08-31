@@ -1,10 +1,13 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
-
+from app.evaluation.scripts.batch_utils import (
+    find_latest_run_dir,
+    load_summary,
+    write_summary,
+)
 from app.evaluation.service import evaluate_curriculum
 from app.models.curriculum import Curriculum
-from app.evaluation.scripts.batch_utils import find_latest_run_dir, load_summary, write_summary
 
 ROOT = Path(__file__).resolve().parents[3]
 MODEL = "deepseek/deepseek-v4-flash-0731"
