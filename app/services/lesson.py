@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from app.clients.gateway import invoke_gateway
+from app.clients.gateway import invoke_gateway, invoke_gateway_validated
 from app.models.curriculum import Curriculum, CurriculumNode
 from app.models.lesson import (
     DetailLevel,
@@ -92,11 +92,11 @@ def generate_paginated_lesson(
         detail_level=detail_level,
     )
 
-    content_page1 = invoke_gateway(
+    start = invoke_gateway_validated(
         model=model,
         prompt=prompt,
+        response_model=LessonStart,
     )
-    start = LessonStart.model_validate_json(content_page1)
 
     expected_pages = EXPECTED_TOTAL_PAGES[detail_level]
     if start.total_pages not in expected_pages:
@@ -141,11 +141,11 @@ def generate_paginated_lesson(
             detail_level=detail_level,
         )
         
-        content = invoke_gateway(
-                model=model,
-                prompt=prompt,
-            )
-        continuation_result = LessonContinuation.model_validate_json(content)
+        continuation_result = invoke_gateway_validated(
+            model=model,
+            prompt=prompt,
+            response_model=LessonContinuation,
+        )
 
         lesson.pages.append(continuation_result.page)
         lesson.page_summaries.append(continuation_result.page_summary)

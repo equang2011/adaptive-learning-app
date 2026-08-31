@@ -1,7 +1,9 @@
 import os
+from typing import TypeVar
 
 import httpx
 from dotenv import load_dotenv
+from pydantic import BaseModel, ValidationError
 
 load_dotenv()
 
@@ -41,3 +43,25 @@ def invoke_gateway(
 
     data = response.json()
     return data["content"]
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def invoke_gateway_validated(
+    model: str,
+    prompt: str,
+    response_model: type[T],
+    max_retries: int = 1,
+) -> T:
+    for attempt in range(max_retries + 1):
+        content = invoke_gateway(model=model, prompt=prompt)
+        try:
+            return response_model.model_validate_json(content)
+        except ValidationError:
+            if attempt == max_retries:
+                raise
+            print(
+                f"{response_model.__name__} failed schema validation, "
+                f"retrying (attempt {attempt + 2}/{max_retries + 1})..."
+            )
