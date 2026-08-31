@@ -1,14 +1,17 @@
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 
-from app.models.curriculum import Curriculum
+from app.models.curriculum import Curriculum, CurriculumNode
+from app.models.lesson import PaginatedLesson
 from app.services.curriculum import find_node_by_id, generate_curriculum
-from app.services.lesson import generate_lesson
+from app.services.lesson import generate_paginated_lesson
+from app.services.rate_limit import check_and_increment
 
 router = APIRouter()
 
@@ -18,10 +21,16 @@ TEMPLATE_DIR = ROOT / "app" / "templates"
 
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
-SCENARIO_FILE = ROOT / "data" / "test_inputs" / "curriculum_scenarios.json"
-MODEL_FILE = ROOT / "data" / "test_inputs" / "models.json"
+CONFIG_DIR = ROOT / "app" / "config"
+SCENARIO_FILE = CONFIG_DIR / "curriculum_scenarios.json"
+MODEL_FILE = CONFIG_DIR / "models.json"
 
 DATA_DIR = ROOT / "data" / "generations"
+
+MAX_TOPIC_LENGTH = 200
+MAX_CONTEXT_LENGTH = 2000
+
+ALLOWED_DETAIL_LEVELS = {"quick", "standard", "deep"}
 
 
 def slugify(value: str) -> str:
@@ -53,10 +62,70 @@ def save_curriculum(
 
     return output_path
 
+def save_lesson(
+    lesson: PaginatedLesson,
+    node: CurriculumNode,
+    model: str,
+    curriculum_file_name: str,
+) -> Path:
+    prompt_version = os.getenv('LESSON_PROMPT_VERSION', None)
+    
+    LESSON_DATA_DIR = DATA_DIR / "lessons"
+    LESSON_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    title_slug = slugify(lesson.title[:35])
+    model_slug = slugify(model)[:30]
+    filename = f"lesson_{title_slug}_{model_slug}_{timestamp}.json"
+
+    output_path = LESSON_DATA_DIR / filename
+    output_path.write_text(
+            lesson.model_dump_json(indent=2),
+            encoding="utf-8",
+        )
+    return output_path
 
 def load_models() -> list[dict]:
     model_json = MODEL_FILE.read_text(encoding="utf-8")
     return json.loads(model_json)
+
+
+def validate_model(model: str) -> None:
+    allowed_ids = {entry["id"] for entry in load_models()}
+    if model not in allowed_ids:
+        raise HTTPException(status_code=400, detail=f"Unknown model: {model!r}")
+
+
+def validate_detail_level(detail_level: str) -> None:
+    if detail_level not in ALLOWED_DETAIL_LEVELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown detail_level: {detail_level!r}",
+        )
+
+
+def validate_length(value: str, field: str, maximum: int) -> None:
+    if len(value) > maximum:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field} exceeds maximum length of {maximum} characters.",
+        )
+
+
+def resolve_generation_path(filename: str) -> Path:
+    """Resolve a user-supplied filename inside DATA_DIR, rejecting traversal."""
+    if filename != Path(filename).name:
+        raise HTTPException(status_code=400, detail="Invalid curriculum filename.")
+
+    candidate = (DATA_DIR / filename).resolve()
+
+    if candidate.parent != DATA_DIR.resolve():
+        raise HTTPException(status_code=400, detail="Invalid curriculum filename.")
+
+    if not candidate.is_file():
+        raise HTTPException(status_code=404, detail="Curriculum not found.")
+
+    return candidate
 
 
 @router.get("/internal")
@@ -82,6 +151,10 @@ def create_curriculum(
     optional_context: str = Form(""),
     model: str = Form(...),
 ):
+    validate_model(model)
+    validate_length(topic, "topic", MAX_TOPIC_LENGTH)
+    validate_length(optional_context, "optional_context", MAX_CONTEXT_LENGTH)
+    check_and_increment()
 
     curriculum = generate_curriculum(
         topic=topic,
@@ -109,8 +182,11 @@ def create_lesson(
     curriculum_filename: str = Form(...),
     node_id: str = Form(...),
     lesson_model: str = Form(...),
+    detail_level: str = Form("standard"),
 ):
-    curriculum_path = DATA_DIR / curriculum_filename
+    validate_model(lesson_model)
+    validate_detail_level(detail_level)
+    curriculum_path = resolve_generation_path(curriculum_filename)
 
     curriculum_string = curriculum_path.read_text(encoding="utf-8")
     curriculum = Curriculum.model_validate_json(curriculum_string)
@@ -122,12 +198,22 @@ def create_lesson(
         if target_node is not None:
             break
     if target_node is None:
-        raise ValueError(f"Node not found: {node_id}")
+        raise HTTPException(status_code=404, detail=f"Node not found: {node_id}")
 
-    lesson = generate_lesson(
+    check_and_increment()
+
+    lesson = generate_paginated_lesson(
         model=lesson_model,
         curriculum=curriculum,
         node=target_node,
+        detail_level=detail_level,
+    )
+
+    saved_path = save_lesson(
+        lesson=lesson,
+        node=target_node,
+        model=lesson_model,
+        curriculum_file_name=curriculum_filename,
     )
 
     return templates.TemplateResponse(
@@ -138,6 +224,7 @@ def create_lesson(
             "curriculum_filename": curriculum_filename,
             "models": load_models(),
             "lesson": lesson,
+            "lesson_filename": saved_path.name,
             "selected_node_id": node_id,
         },
     )

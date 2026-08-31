@@ -52,7 +52,7 @@ uvicorn app.main:app --reload --port 8001
 
 - `GET /health` — liveness check
 - `GET /internal` — working UI for generating and reviewing curricula/lessons
-  against saved test scenarios and models (`data/test_inputs/`)
+  against saved test scenarios and models (`app/config/`)
 
 ## Project layout
 
@@ -63,14 +63,15 @@ app/
   models/               Pydantic schemas (curriculum.py, lesson.py)
   services/             Prompt construction + gateway invocation per domain
   clients/gateway.py     httpx client for the LLM gateway's /invoke endpoint
+  config/                Scenario and model fixtures used by /internal (committed)
   templates/, static/    Jinja2 templates and CSS for the internal UI
   evaluation/            LLM-graded evaluation of generated curricula/lessons
 prompts/                 Versioned prompt templates (curriculum_v1..v4, lesson_v1, ...)
 scripts/                 Standalone smoke-test clients for curriculum/lesson generation
-data/
+data/                    Gitignored; not present in deployed containers
   generations/            Saved curriculum generation outputs (JSON)
   lessons/                Saved lesson generation outputs (JSON)
-  test_inputs/            Scenario and model fixtures used by /internal
+  test_inputs/            Evaluation batch fixtures
   evaluations/            Evaluation run outputs
 notes/                    Working notes and design docs (not polished docs)
 tests/                    pytest suite
