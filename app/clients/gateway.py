@@ -10,6 +10,9 @@ load_dotenv()
 gateway_api_key = os.getenv("LLM_GATEWAY_API_KEY")
 gateway_url = os.getenv("LLM_GATEWAY_URL", "http://127.0.0.1:8000/invoke")
 
+if not gateway_api_key:
+    raise RuntimeError("LLM_GATEWAY_API_KEY not set")
+
 headers = {
     "Authorization": f"Bearer {gateway_api_key}",
 }
