@@ -8,13 +8,11 @@ from pydantic import BaseModel, ValidationError
 load_dotenv()
 
 gateway_api_key = os.getenv("LLM_GATEWAY_API_KEY")
+gateway_url = os.getenv("LLM_GATEWAY_URL", "http://127.0.0.1:8000/invoke")
 
 headers = {
     "Authorization": f"Bearer {gateway_api_key}",
 }
-
-PROD_URL ="https://llm-gateway-production-b085.up.railway.app/invoke"
-LOCAL_URL = "http://127.0.0.1:8000/invoke"
 
 
 def invoke_gateway(
@@ -28,9 +26,8 @@ def invoke_gateway(
     payload = {"model": model, "messages": [{"role": "user", "content": prompt}]}
 
     try:
-        # TODO: switch back to PROD_URL when done with local batch testing
         response = httpx.post(
-            LOCAL_URL,
+            gateway_url,
             json=payload,
             headers=headers,
             timeout=550.0,
