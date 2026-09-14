@@ -1,26 +1,25 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException
 
-DAILY_LIMIT = 100
+WINDOW = timedelta(hours=12)
+LIMIT = 50
 
-_count = 0
-_count_date: date = datetime.now(UTC).date()
+_calls: list[datetime] = []
 
 
 def check_and_increment() -> None:
-    """Raise 429 once DAILY_LIMIT generations have been used today (UTC)."""
-    global _count, _count_date
+    """Raise 429 once LIMIT generations have been used in the last WINDOW."""
+    global _calls
+    now = datetime.now(UTC)
 
-    today = datetime.now(UTC).date()
-    if today != _count_date:
-        _count = 0
-        _count_date = today
+    cutoff = now - WINDOW
+    _calls = [t for t in _calls if t > cutoff]
 
-    if _count >= DAILY_LIMIT:
+    if len(_calls) >= LIMIT:
         raise HTTPException(
-            status_code=429,
-            detail=f"Daily generation limit reached ({DAILY_LIMIT}/day). Try again tomorrow.",
-        )
+                    status_code=429,
+                    detail=f"Period generation limit reached ({LIMIT}/12 hours). Try again later.",
+                )
 
-    _count += 1
+    _calls.append(now)
