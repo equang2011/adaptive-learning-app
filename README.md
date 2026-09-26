@@ -54,6 +54,13 @@ uvicorn app.main:app --reload --port 8001
 - `GET /internal` — working UI for generating and reviewing curricula/lessons
   against saved test scenarios and models (`app/config/`)
 
+## Deployment
+
+Currently hosted on Railway: <https://adaptive-learning-app-production.up.railway.app/internal>
+
+`/internal` always generates with `openai/gpt-5.6-luna` (set by `MODEL` in
+`app/routes/internal.py`); there is no model picker.
+
 ## Project layout
 
 ```
@@ -124,7 +131,11 @@ files are not built yet — see `PROJECT_CONTEXT.md` for the full roadmap and
 ## Configuration
 
 ```
-LLM_GATEWAY_URL=http://localhost:8000
+LLM_GATEWAY_URL=http://127.0.0.1:8000/invoke
 ```
+
+The value is the full gateway endpoint, including `/invoke`. In production it
+points at the deployed gateway on Railway
+(`https://llm-gateway-production-b085.up.railway.app/invoke`).
 
 No provider API keys belong in this repo — those live in the gateway service.
