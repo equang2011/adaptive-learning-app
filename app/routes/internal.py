@@ -28,7 +28,7 @@ SCENARIO_FILE = CONFIG_DIR / "curriculum_scenarios.json"
 
 DATA_DIR = ROOT / "data" / "generations"
 
-MODEL = "openai/gpt-5.6-luna"
+MODEL = os.getenv("LESSON_MODEL", "openai/gpt-6-luna")
 
 MAX_TOPIC_LENGTH = 200
 MAX_CONTEXT_LENGTH = 2000

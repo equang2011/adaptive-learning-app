@@ -58,8 +58,9 @@ uvicorn app.main:app --reload --port 8001
 
 Currently hosted on Railway: <https://adaptive-learning-app-production.up.railway.app/internal>
 
-`/internal` always generates with `openai/gpt-5.6-luna` (set by `MODEL` in
-`app/routes/internal.py`); there is no model picker.
+`/internal` has no model picker. It always generates with the model in the
+`LESSON_MODEL` env var, defaulting to `openai/gpt-6-luna` (see `MODEL` in
+`app/routes/internal.py`).
 
 ## Project layout
 
