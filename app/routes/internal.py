@@ -25,9 +25,10 @@ templates.env.filters["markdown"] = render_markdown
 
 CONFIG_DIR = ROOT / "app" / "config"
 SCENARIO_FILE = CONFIG_DIR / "curriculum_scenarios.json"
-MODEL_FILE = CONFIG_DIR / "models.json"
 
 DATA_DIR = ROOT / "data" / "generations"
+
+MODEL = "openai/gpt-5.6-luna"
 
 MAX_TOPIC_LENGTH = 200
 MAX_CONTEXT_LENGTH = 2000
@@ -87,17 +88,6 @@ def save_lesson(
         )
     return output_path
 
-def load_models() -> list[dict]:
-    model_json = MODEL_FILE.read_text(encoding="utf-8")
-    return json.loads(model_json)
-
-
-def validate_model(model: str) -> None:
-    allowed_ids = {entry["id"] for entry in load_models()}
-    if model not in allowed_ids:
-        raise HTTPException(status_code=400, detail=f"Unknown model: {model!r}")
-
-
 def validate_detail_level(detail_level: str) -> None:
     if detail_level not in ALLOWED_DETAIL_LEVELS:
         raise HTTPException(
@@ -134,14 +124,11 @@ def resolve_generation_path(filename: str) -> Path:
 def internal_home(request: Request):
     scenario_json = SCENARIO_FILE.read_text(encoding="utf-8")
     scenarios = json.loads(scenario_json)
-    model_json = MODEL_FILE.read_text(encoding="utf-8")
-    models = json.loads(model_json)
     return templates.TemplateResponse(
         request=request,
         name="internal_home.html",
         context={
             "scenarios": scenarios,
-            "models": models,
         },
     )
 
@@ -151,20 +138,18 @@ def create_curriculum(
     request: Request,
     topic: str = Form(...),
     optional_context: str = Form(""),
-    model: str = Form(...),
 ):
-    validate_model(model)
     validate_length(topic, "topic", MAX_TOPIC_LENGTH)
     validate_length(optional_context, "optional_context", MAX_CONTEXT_LENGTH)
     check_and_increment()
 
     curriculum = generate_curriculum(
         topic=topic,
-        model=model,
+        model=MODEL,
         optional_context=optional_context,
     )
 
-    saved_path = save_curriculum(curriculum=curriculum, topic=topic, model=model)
+    saved_path = save_curriculum(curriculum=curriculum, topic=topic, model=MODEL)
 
     return templates.TemplateResponse(
         request=request,
@@ -172,7 +157,6 @@ def create_curriculum(
         context={
             "curriculum": curriculum,
             "curriculum_filename": saved_path.name,
-            "models": load_models(),
             "lesson": None,
         },
     )
@@ -183,10 +167,8 @@ def create_lesson(
     request: Request,
     curriculum_filename: str = Form(...),
     node_id: str = Form(...),
-    lesson_model: str = Form(...),
     detail_level: str = Form("standard"),
 ):
-    validate_model(lesson_model)
     validate_detail_level(detail_level)
     curriculum_path = resolve_generation_path(curriculum_filename)
 
@@ -205,7 +187,7 @@ def create_lesson(
     check_and_increment()
 
     lesson = generate_paginated_lesson(
-        model=lesson_model,
+        model=MODEL,
         curriculum=curriculum,
         node=target_node,
         detail_level=detail_level,
@@ -214,7 +196,7 @@ def create_lesson(
     saved_path = save_lesson(
         lesson=lesson,
         node=target_node,
-        model=lesson_model,
+        model=MODEL,
         curriculum_file_name=curriculum_filename,
     )
 
@@ -224,7 +206,6 @@ def create_lesson(
         context={
             "curriculum": curriculum,
             "curriculum_filename": curriculum_filename,
-            "models": load_models(),
             "lesson": lesson,
             "lesson_filename": saved_path.name,
             "selected_node_id": node_id,

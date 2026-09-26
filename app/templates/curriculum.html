@@ -53,15 +53,6 @@
                     </div>
 
                     <div class="lesson-request">
-                        <label class="field-label" for="lesson_model">Lesson model</label>
-                        <select id="lesson_model" name="lesson_model" required>
-                            {% for model in models %}
-                            <option value="{{ model.id }}">
-                                {{ model.label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-
                         <label class="field-label" for="detail_level">Detail level</label>
                         <select id="detail_level" name="detail_level" required>
                             <option value="quick">Quick (~5 min, 1 page)</option>
