@@ -59,7 +59,7 @@ uvicorn app.main:app --reload --port 8001
 Currently hosted on Railway: <https://adaptive-learning-app-production.up.railway.app/internal>
 
 `/internal` has no model picker. It always generates with the model in the
-`LESSON_MODEL` env var, defaulting to `openai/gpt-6-luna` (see `MODEL` in
+`LESSON_MODEL` env var, defaulting to `openai-gpt-6-luna` (see `MODEL` in
 `app/routes/internal.py`).
 
 ## Project layout
@@ -71,7 +71,7 @@ app/
   models/               Pydantic schemas (curriculum.py, lesson.py)
   services/             Prompt construction + gateway invocation per domain
   clients/gateway.py     httpx client for the LLM gateway's /invoke endpoint
-  config/                Scenario and model fixtures used by /internal (committed)
+  config/                Scenario fixtures used by /internal (committed)
   templates/, static/    Jinja2 templates and CSS for the internal UI
   evaluation/            LLM-graded evaluation of generated curricula/lessons
 prompts/                 Versioned prompt templates (curriculum_v1..v4, lesson_v1, ...)
@@ -132,10 +132,13 @@ files are not built yet — see `PROJECT_CONTEXT.md` for the full roadmap and
 ## Configuration
 
 ```
-LLM_GATEWAY_URL=http://127.0.0.1:8000/invoke
+GATEWAY_URL=http://127.0.0.1:8000/invoke
+GATEWAY_API_KEY=<key issued by the gateway>
+LESSON_MODEL=openai-gpt-6-luna
 ```
 
-The value is the full gateway endpoint, including `/invoke`. In production it
+Both `GATEWAY_URL` and `GATEWAY_API_KEY` are required; the app refuses to
+start without them. `GATEWAY_URL` is the full gateway endpoint, including `/invoke`. In production it
 points at the deployed gateway on Railway
 (`https://llm-gateway-production-b085.up.railway.app/invoke`).
 

@@ -12,7 +12,7 @@ from app.services.curriculum import generate_curriculum
 
 ROOT = Path(__file__).resolve().parents[3]
 CURRICULUM_INPUTS = ROOT / "data" / "test_inputs" / "curriculum_test_cases_1.json"
-MODEL = "deepseek/deepseek-v4-flash-0731"
+MODEL = "deepseek-v4.1-flash-1017"
 
 GENERATIONS_DIR = ROOT / "data" / "generations"
 

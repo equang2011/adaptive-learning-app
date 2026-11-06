@@ -8,7 +8,7 @@ TOPIC = """
 Teach me the fundamentals of distributed systems. I know Python and basic backend development, but I have very little experience with networking or distributed infrastructure.
 """
 
-MODEL = "deepseek/deepseek-v4-flash-0731"
+MODEL = "deepseek-v4.1-flash-1017"
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "generations"
 

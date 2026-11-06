@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 LESSON_FILE = ROOT / "data" / "lessons" / "lesson_m4-s1-l3_v1_tencent_hy3_20260808_200933.json"
 CURRICULUM_FILE = ROOT / "data" / "generations" / "curriculum_20260808_183819.json"
 
-MODEL = "deepseek/deepseek-v4-flash-0731"
+MODEL = "deepseek-v4.1-flash-1017"
 
 
 def find_node_by_id(

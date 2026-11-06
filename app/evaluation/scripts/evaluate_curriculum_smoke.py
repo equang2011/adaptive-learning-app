@@ -10,7 +10,7 @@ from app.evaluation.service import evaluate_curriculum
 from app.models.curriculum import Curriculum
 
 ROOT = Path(__file__).resolve().parents[3]
-MODEL = "deepseek/deepseek-v4-flash-0731"
+MODEL = "deepseek-v4.1-flash-1017"
 GENERATIONS_DIR = ROOT / "data" / "generations"
 EVALUATIONS_DIR = ROOT / "data" / "evaluations"
 MAX_ATTEMPTS = 3
