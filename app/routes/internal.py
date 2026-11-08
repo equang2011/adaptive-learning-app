@@ -1,20 +1,17 @@
 import json
 import os
-import re
 import time
-from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Form, HTTPException, Request, Depends
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 
-from app.db.session import get_session
-from app.db.models import CurriculumRow
-from app.models.curriculum import Curriculum, CurriculumNode
-from app.models.lesson import PaginatedLesson
-from app.services.curriculum import find_node_by_id, generate_curriculum, PROMPT_FILE as CURRICULUM_PROMPT_VERSION
-from app.services.lesson import generate_paginated_lesson
+from app.db.models import CurriculumRow, LessonRow
+from app.db.session import DbSession
+from app.models.curriculum import Curriculum
+from app.services.curriculum import PROMPT_FILE as CURRICULUM_PROMPT_VERSION
+from app.services.curriculum import find_node_by_id, generate_curriculum
+from app.services.lesson import LESSON_PROMPT_VERSION, generate_paginated_lesson
 from app.services.rate_limit import check_and_increment
 from utils.markdown_render import render_markdown
 
@@ -30,8 +27,6 @@ templates.env.filters["markdown"] = render_markdown
 CONFIG_DIR = ROOT / "app" / "config"
 SCENARIO_FILE = CONFIG_DIR / "curriculum_scenarios.json"
 
-DATA_DIR = ROOT / "data" / "generations"
-
 MODEL = os.getenv("LESSON_MODEL", "openai-gpt-6-luna")
 
 MAX_TOPIC_LENGTH = 200
@@ -39,58 +34,6 @@ MAX_CONTEXT_LENGTH = 2000
 
 ALLOWED_DETAIL_LEVELS = {"quick", "standard", "deep"}
 
-
-def slugify(value: str) -> str:
-    value = value.lower().strip()
-    value = re.sub(r"[^a-z0-9]+", "_", value)
-    return value.strip("_")
-
-
-def save_curriculum(
-    curriculum: Curriculum,
-    topic: str,
-    model: str,
-) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    topic_slug = slugify(topic)[:40]
-    model_slug = slugify(model)[:30]
-
-    filename = f"curriculum_{topic_slug}_{model_slug}_{timestamp}.json"
-
-    output_path = DATA_DIR / filename
-
-    output_path.write_text(
-        curriculum.model_dump_json(indent=2),
-        encoding="utf-8",
-    )
-
-    return output_path
-
-def save_lesson(
-    lesson: PaginatedLesson,
-    node: CurriculumNode,
-    model: str,
-    curriculum_file_name: str,
-) -> Path:
-    prompt_version = os.getenv('LESSON_PROMPT_VERSION', None)
-    
-    LESSON_DATA_DIR = DATA_DIR / "lessons"
-    LESSON_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    title_slug = slugify(lesson.title[:35])
-    model_slug = slugify(model)[:30]
-    filename = f"lesson_{title_slug}_{model_slug}_{timestamp}.json"
-
-    output_path = LESSON_DATA_DIR / filename
-    output_path.write_text(
-            lesson.model_dump_json(indent=2),
-            encoding="utf-8",
-        )
-    return output_path
 
 def validate_detail_level(detail_level: str) -> None:
     if detail_level not in ALLOWED_DETAIL_LEVELS:
@@ -106,22 +49,6 @@ def validate_length(value: str, field: str, maximum: int) -> None:
             status_code=400,
             detail=f"{field} exceeds maximum length of {maximum} characters.",
         )
-
-
-def resolve_generation_path(filename: str) -> Path:
-    """Resolve a user-supplied filename inside DATA_DIR, rejecting traversal."""
-    if filename != Path(filename).name:
-        raise HTTPException(status_code=400, detail="Invalid curriculum filename.")
-
-    candidate = (DATA_DIR / filename).resolve()
-
-    if candidate.parent != DATA_DIR.resolve():
-        raise HTTPException(status_code=400, detail="Invalid curriculum filename.")
-
-    if not candidate.is_file():
-        raise HTTPException(status_code=404, detail="Curriculum not found.")
-
-    return candidate
 
 
 @router.get("/internal")
@@ -140,9 +67,9 @@ def internal_home(request: Request):
 @router.post("/internal/curriculum")
 def create_curriculum(
     request: Request,
+    db: DbSession,
     topic: str = Form(...),
     optional_context: str = Form(""),
-    db: Session = Depends(get_session),
 ):
     validate_length(topic, "topic", MAX_TOPIC_LENGTH)
     validate_length(optional_context, "optional_context", MAX_CONTEXT_LENGTH)
@@ -155,8 +82,6 @@ def create_curriculum(
         optional_context=optional_context,
     )
     latency_ms = (time.perf_counter() - start) * 1000
-
-    saved_path = save_curriculum(curriculum=curriculum, topic=topic, model=MODEL)
 
     row = CurriculumRow(
         topic=topic,
@@ -176,7 +101,6 @@ def create_curriculum(
         name="curriculum.html",
         context={
             "curriculum": curriculum,
-            "curriculum_filename": saved_path.name,
             "curriculum_id": row.id,
             "lesson": None,
         },
@@ -186,15 +110,21 @@ def create_curriculum(
 @router.post("/internal/lesson")
 def create_lesson(
     request: Request,
-    curriculum_filename: str = Form(...),
+    db: DbSession,
+    curriculum_id: int = Form(...),
     node_id: str = Form(...),
     detail_level: str = Form("standard"),
 ):
     validate_detail_level(detail_level)
-    curriculum_path = resolve_generation_path(curriculum_filename)
 
-    curriculum_string = curriculum_path.read_text(encoding="utf-8")
-    curriculum = Curriculum.model_validate_json(curriculum_string)
+    curriculum_row = db.get(CurriculumRow, curriculum_id)
+    if curriculum_row is None:
+        raise HTTPException(
+            status_code=404, detail=f"Curriculum not found: {curriculum_id}"
+        )
+
+    curriculum = Curriculum.model_validate(curriculum_row.content)
+    db.rollback()
 
     target_node = None
 
@@ -207,28 +137,37 @@ def create_lesson(
 
     check_and_increment()
 
+    start = time.perf_counter()
     lesson = generate_paginated_lesson(
         model=MODEL,
         curriculum=curriculum,
         node=target_node,
         detail_level=detail_level,
     )
+    latency_ms = (time.perf_counter() - start) * 1000
 
-    saved_path = save_lesson(
-        lesson=lesson,
-        node=target_node,
+    lesson_row = LessonRow(
+        curriculum_id=curriculum_id,
+        node_id=node_id,
+        detail_level=detail_level,
         model=MODEL,
-        curriculum_file_name=curriculum_filename,
+        prompt_version=LESSON_PROMPT_VERSION,
+        generation_latency_ms=latency_ms,
+        content=lesson.model_dump(mode="json"),
     )
+
+    db.add(lesson_row)
+    db.commit()
+    db.refresh(lesson_row)
 
     return templates.TemplateResponse(
         request=request,
         name="curriculum.html",
         context={
             "curriculum": curriculum,
-            "curriculum_filename": curriculum_filename,
+            "curriculum_id": curriculum_id,
             "lesson": lesson,
-            "lesson_filename": saved_path.name,
+            "lesson_id": lesson_row.id,
             "selected_node_id": node_id,
         },
     )

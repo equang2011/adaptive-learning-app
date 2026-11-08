@@ -3,8 +3,10 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from fastapi import Depends
+from typing import Annotated
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 load_dotenv()
 
@@ -18,6 +20,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_SQLITE_PATH.as_pos
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
     connect_args["check_same_thread"] = False
+else:
+    connect_args["connect_timeout"] = 5   # seconds; error out instead of hanging
 
 
 engine = create_engine(DATABASE_URL, connect_args=connect_args, echo=True)
@@ -33,3 +37,4 @@ def get_session():
         session.close()
 
 
+DbSession = Annotated[Session, Depends(get_session)]

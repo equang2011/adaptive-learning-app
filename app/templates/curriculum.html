@@ -7,8 +7,8 @@
 {{ render_nodes(node.children, depth + 1) }}
 {% else %}
 <label class="tree-row leaf" style="margin-left: {{ depth * 18 }}px;">
-    <input type="radio" name="node_id" value="{{ node.id }}" class="node-radio" required
-        {% if selected_node_id is defined and node.id==selected_node_id %}checked{% endif %}>
+    <input type="radio" name="node_id" value="{{ node.id }}" class="node-radio" required {% if selected_node_id is
+        defined and node.id==selected_node_id %}checked{% endif %}>
     <span class="leaf-text">{{ node.title }}</span>
 </label>
 {% endif %}
@@ -46,7 +46,7 @@
                 {% endif %}
 
                 <form method="post" action="/internal/lesson">
-                    <input type="hidden" name="curriculum_filename" value="{{ curriculum_filename }}">
+                    <input type="hidden" name="curriculum_id" value="{{ curriculum_id }}">
 
                     <div class="tree">
                         {{ render_nodes(curriculum.nodes) }}
@@ -88,8 +88,8 @@
                 </div>
 
                 {% for page in lesson.pages %}
-                <article class="lesson-page" data-page-number="{{ page.page_number }}"
-                    {% if not loop.first %}hidden{% endif %}>
+                <article class="lesson-page" data-page-number="{{ page.page_number }}" {% if not loop.first %}hidden{%
+                    endif %}>
                     <div class="lesson-content">
                         {{ page.introduction | markdown }}
 
