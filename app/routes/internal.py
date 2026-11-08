@@ -64,6 +64,42 @@ def internal_home(request: Request):
     )
 
 
+@router.get("/internal/curricula")
+def list_curricula(request: Request, db: DbSession):
+    # TODO (me): query CurriculumRow, newest first (created_at desc).
+    # Return a list of rows (id, topic, model, created_at) plus a lesson
+    # count per curriculum, e.g. a list of (CurriculumRow, lesson_count).
+    curricula = []
+
+    return templates.TemplateResponse(
+        request=request,
+        name="curricula_list.html",
+        context={"curricula": curricula},
+    )
+
+
+@router.get("/internal/curricula/{curriculum_id}")
+def curriculum_detail(request: Request, curriculum_id: int, db: DbSession):
+    # TODO (me): load the CurriculumRow with id == curriculum_id, or None.
+    # If it doesn't exist, raise HTTPException(404, "Curriculum not found").
+    curriculum_row = None
+
+    # TODO (me): query LessonRow where curriculum_id == curriculum_id,
+    # newest first. Return a list of rows (id, node_id, detail_level, model,
+    # created_at) for the lessons already generated for this curriculum.
+    lessons = []
+
+    return templates.TemplateResponse(
+        request=request,
+        name="curricula_detail.html",
+        context={
+            "curriculum_row": curriculum_row,
+            "curriculum_id": curriculum_id,
+            "lessons": lessons,
+        },
+    )
+
+
 @router.post("/internal/curriculum")
 def create_curriculum(
     request: Request,

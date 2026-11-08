@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Learning — {{ curriculum_row.topic if curriculum_row else "Curriculum" }}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <header class="topbar">
+        <span class="brand">
+            <span class="brand-mark">A</span>
+            Adaptive Learning
+        </span>
+        <div class="top-actions">
+            <a class="ghost-button" href="/internal/curricula">My curricula</a>
+            <a class="ghost-button" href="/internal">+ New curriculum</a>
+        </div>
+    </header>
+
+    <div class="create-shell">
+        <p><a href="/internal/curricula">&larr; My curricula</a></p>
+
+        {# Expects `curriculum_row` (CurriculumRow) and `lessons` (list of LessonRow) - see TODOs in the route. #}
+        {% if curriculum_row %}
+        <h1>{{ curriculum_row.topic }}</h1>
+        <p class="subtitle">
+            {{ curriculum_row.model }} · {{ curriculum_row.created_at.strftime("%Y-%m-%d %H:%M") }}
+        </p>
+
+        <h2>Lessons</h2>
+        {% if lessons %}
+        <ul>
+            {% for lesson in lessons %}
+            <li>
+                {{ lesson.node_id }} · {{ lesson.detail_level }}
+                <small>{{ lesson.model }} · {{ lesson.created_at.strftime("%Y-%m-%d %H:%M") }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="subtitle">No lessons generated for this curriculum yet.</p>
+        {% endif %}
+        {% else %}
+        <h1>Curriculum #{{ curriculum_id }}</h1>
+        <p class="subtitle">Not loaded yet - the database query in the route is still a TODO.</p>
+        {% endif %}
+    </div>
+</body>
+
+</html>

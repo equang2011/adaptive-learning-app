@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Learning — My curricula</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <header class="topbar">
+        <span class="brand">
+            <span class="brand-mark">A</span>
+            Adaptive Learning
+        </span>
+        <div class="top-actions">
+            <a class="ghost-button" href="/internal/curricula">My curricula</a>
+            <a class="ghost-button" href="/internal">+ New curriculum</a>
+        </div>
+    </header>
+
+    <div class="create-shell">
+        <h1>My curricula</h1>
+        <p class="subtitle">Curricula you've generated. Open one to see its lessons.</p>
+
+        {# Expects `curricula`: list of (CurriculumRow, lesson_count) - see TODO in the route. #}
+        {% if curricula %}
+        <ul>
+            {% for row, lesson_count in curricula %}
+            <li>
+                <a href="/internal/curricula/{{ row.id }}">{{ row.topic }}</a>
+                <small>
+                    {{ row.model }} · {{ row.created_at.strftime("%Y-%m-%d %H:%M") }}
+                    · {{ lesson_count }} lesson{{ "" if lesson_count == 1 else "s" }}
+                </small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="subtitle">No curricula yet. <a href="/internal">Create your first one.</a></p>
+        {% endif %}
+    </div>
+</body>
+
+</html>
