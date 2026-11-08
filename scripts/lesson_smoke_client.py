@@ -6,7 +6,7 @@ from app.models.curriculum import Curriculum, CurriculumNode
 from app.models.lesson import PaginatedLesson
 from app.services.lesson import generate_paginated_lesson
 
-MODEL = "openai/gpt-5.6-luna"
+MODEL = "openai-gpt-5.6-luna"
 DETAIL_LEVEL = os.getenv("LESSON_DETAIL_LEVEL", "standard")
 
 ROOT = Path(__file__).resolve().parents[1]

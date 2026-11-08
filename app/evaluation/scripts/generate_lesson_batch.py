@@ -10,7 +10,7 @@ from app.services.lesson import generate_paginated_lesson
 
 MODEL = os.getenv(
     "LESSON_MODEL",
-    "openai/gpt-5.6-luna",
+    "openai-gpt-5.6-luna",
 )
 DETAIL_LEVEL = os.getenv("LESSON_DETAIL_LEVEL", "standard")
 

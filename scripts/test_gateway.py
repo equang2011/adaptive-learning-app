@@ -5,7 +5,7 @@ from app.clients.gateway import invoke_gateway
 
 try:
     response = invoke_gateway(
-        model="nvidia/nemotron-3-ultra-550b-a55b:free",
+        model="nemotron-3-ultra-free",
         prompt="Say 'Hello from Railway!' and nothing else.",
     )
     print("✓ Gateway working!")

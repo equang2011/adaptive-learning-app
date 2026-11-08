@@ -302,7 +302,7 @@ Configuration
 Learning application .env:
 
 LLM_GATEWAY_URL=http://localhost:8000
-DEFAULT_MODEL=qwen/qwen3.7-flash
+DEFAULT_MODEL=qwen-3.7-flash
 
 No provider API keys should exist in the learning application. Provider credentials belong to the gateway.
 
@@ -978,7 +978,7 @@ Example:
   "request_id": "req_123",
   "generation_type": "lesson",
   "node_id": "node_idempotency",
-  "model": "qwen/qwen3.7-flash",
+  "model": "qwen-3.7-flash",
   "latency_ms": 1840,
   "validation_status": "passed"
 }
