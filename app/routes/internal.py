@@ -1,15 +1,19 @@
 import json
 import os
 import re
+import time
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, Form, HTTPException, Request, Depends
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
+from app.db.session import get_session
+from app.db.models import CurriculumRow
 from app.models.curriculum import Curriculum, CurriculumNode
 from app.models.lesson import PaginatedLesson
-from app.services.curriculum import find_node_by_id, generate_curriculum
+from app.services.curriculum import find_node_by_id, generate_curriculum, PROMPT_FILE as CURRICULUM_PROMPT_VERSION
 from app.services.lesson import generate_paginated_lesson
 from app.services.rate_limit import check_and_increment
 from utils.markdown_render import render_markdown
@@ -138,18 +142,34 @@ def create_curriculum(
     request: Request,
     topic: str = Form(...),
     optional_context: str = Form(""),
+    db: Session = Depends(get_session),
 ):
     validate_length(topic, "topic", MAX_TOPIC_LENGTH)
     validate_length(optional_context, "optional_context", MAX_CONTEXT_LENGTH)
     check_and_increment()
 
+    start = time.perf_counter()
     curriculum = generate_curriculum(
         topic=topic,
         model=MODEL,
         optional_context=optional_context,
     )
+    latency_ms = (time.perf_counter() - start) * 1000
 
     saved_path = save_curriculum(curriculum=curriculum, topic=topic, model=MODEL)
+
+    row = CurriculumRow(
+        topic=topic,
+        optional_context=optional_context or None,
+        model=MODEL,
+        prompt_version=CURRICULUM_PROMPT_VERSION,
+        generation_latency_ms=latency_ms,
+        content=curriculum.model_dump(mode="json"),
+    )
+
+    db.add(row)
+    db.commit()
+    db.refresh(row)
 
     return templates.TemplateResponse(
         request=request,
@@ -157,6 +177,7 @@ def create_curriculum(
         context={
             "curriculum": curriculum,
             "curriculum_filename": saved_path.name,
+            "curriculum_id": row.id,
             "lesson": None,
         },
     )
