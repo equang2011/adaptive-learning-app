@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SQLITE_PATH = ROOT / "data" / "app.db"
 DEFAULT_SQLITE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix}")
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix()}")
 
 
 connect_args = {}
