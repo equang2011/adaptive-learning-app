@@ -15,6 +15,9 @@ from app.services.lesson import LESSON_PROMPT_VERSION, generate_paginated_lesson
 from app.services.rate_limit import check_and_increment
 from utils.markdown_render import render_markdown
 
+from sqlalchemy import func, select
+from sqlalchemy.orm import defer
+
 router = APIRouter()
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -69,7 +72,17 @@ def list_curricula(request: Request, db: DbSession):
     # TODO (me): query CurriculumRow, newest first (created_at desc).
     # Return a list of rows (id, topic, model, created_at) plus a lesson
     # count per curriculum, e.g. a list of (CurriculumRow, lesson_count).
-    curricula = []
+
+    stmt = (
+        select(CurriculumRow, func.count(LessonRow.id))
+        .options(defer(CurriculumRow.content))
+        .outerjoin(LessonRow, LessonRow.curriculum_id == CurriculumRow.id)
+        .group_by(CurriculumRow.id)
+        .order_by(CurriculumRow.created_at.desc())
+    )
+
+
+    curricula = db.execute(stmt).all()
 
     return templates.TemplateResponse(
         request=request,
