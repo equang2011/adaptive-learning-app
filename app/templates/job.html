@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Learning — Generating…</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <header class="topbar">
+        <span class="brand">
+            <span class="brand-mark">A</span>
+            Adaptive Learning
+        </span>
+    </header>
+
+    <div class="job-shell">
+        {% if job %}
+        <div class="loading-panel" id="job" role="status" aria-live="polite"
+            data-job-id="{{ job.id }}" data-elapsed="{{ elapsed_seconds }}">
+            <div class="job-working" {% if job.status == "failed" %}hidden{% endif %}>
+                <div class="loading-spinner" aria-hidden="true"></div>
+                <p class="loading-message">{{ message }}</p>
+                <p class="loading-elapsed">Elapsed: 0s</p>
+                <p class="job-hint">You can leave this page and come back. Your result will be here.</p>
+            </div>
+            <div class="job-failed" {% if job.status != "failed" %}hidden{% endif %}>
+                <p class="loading-message job-error">{{ job.error or "Generation failed. Please try again." }}</p>
+                <a class="primary-button" href="/internal">Start over</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="loading-panel">
+            <p class="loading-message">This job couldn't be found.</p>
+            <p class="job-hint">It may have expired, or the server restarted while it was running.</p>
+            <a class="primary-button" href="/internal">Start over</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if job %}
+    <script src="/static/job.js"></script>
+    {% endif %}
+</body>
+
+</html>
