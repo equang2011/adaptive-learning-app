@@ -45,7 +45,8 @@
                 <div class="course-meta">{{ curriculum.description }}</div>
                 {% endif %}
 
-                <form method="post" action="/internal/lesson">
+                <form method="post" action="/internal/lesson"
+                    data-loading-message="Generating your lesson, usually 30–60 seconds">
                     <input type="hidden" name="curriculum_filename" value="{{ curriculum_filename }}">
 
                     <div class="tree">
@@ -181,6 +182,7 @@
             </div>
         </section>
     </main>
+    <script src="/static/loading.js"></script>
 </body>
 
 </html>
