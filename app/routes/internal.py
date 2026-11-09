@@ -27,7 +27,7 @@ templates.env.filters["markdown"] = render_markdown
 CONFIG_DIR = ROOT / "app" / "config"
 SCENARIO_FILE = CONFIG_DIR / "curriculum_scenarios.json"
 
-MODEL = os.getenv("LESSON_MODEL", "openai-gpt-6-luna")
+MODEL = os.getenv("LESSON_MODEL", "deepseek-v4.1-flash-1017")
 
 MAX_TOPIC_LENGTH = 200
 MAX_CONTEXT_LENGTH = 2000
