@@ -27,7 +27,8 @@
         </p>
 
         <div class="create-card">
-            <form method="post" action="/internal/curriculum">
+            <form method="post" action="/internal/curriculum"
+                data-loading-message="Generating your curriculum, usually 30–60 seconds">
                 <label class="field-label" for="topic">Topic</label>
                 <input id="topic" name="topic" type="text" required
                     placeholder="e.g. SQL window functions">
@@ -57,6 +58,7 @@
         </div>
     </div>
 
+    <script src="/static/loading.js"></script>
     <script>
         const scenarioSelect = document.getElementById("scenario");
         const topicInput = document.getElementById("topic");
