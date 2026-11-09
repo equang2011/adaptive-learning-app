@@ -81,7 +81,6 @@ def list_curricula(request: Request, db: DbSession):
         .order_by(CurriculumRow.created_at.desc())
     )
 
-
     curricula = db.execute(stmt).all()
 
     return templates.TemplateResponse(
@@ -93,14 +92,18 @@ def list_curricula(request: Request, db: DbSession):
 
 @router.get("/internal/curricula/{curriculum_id}")
 def curriculum_detail(request: Request, curriculum_id: int, db: DbSession):
-    # TODO (me): load the CurriculumRow with id == curriculum_id, or None.
-    # If it doesn't exist, raise HTTPException(404, "Curriculum not found").
-    curriculum_row = None
+    curriculum_row = db.get(CurriculumRow, curriculum_id)
+    if curriculum_row is None:
+        raise HTTPException(
+            status_code=404, detail=f"Curriculum not found: {curriculum_id}"
+        )
 
-    # TODO (me): query LessonRow where curriculum_id == curriculum_id,
-    # newest first. Return a list of rows (id, node_id, detail_level, model,
-    # created_at) for the lessons already generated for this curriculum.
-    lessons = []
+    stmt = (
+        select(LessonRow)
+        .where(LessonRow.curriculum_id == curriculum_id)
+        .order_by(LessonRow.created_at.desc())
+    )
+    lessons = db.scalars(stmt).all()
 
     return templates.TemplateResponse(
         request=request,
