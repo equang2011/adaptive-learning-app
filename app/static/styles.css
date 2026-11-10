@@ -607,3 +607,26 @@ h1 {
         animation-duration: 3s;
     }
 }
+
+
+/* Waiting page for a background generation job */
+
+.job-shell {
+    display: flex;
+    justify-content: center;
+    padding: 80px 0 40px;
+}
+
+.job-shell .loading-panel {
+    width: 100%;
+}
+
+.job-hint {
+    margin: 16px 0 0;
+    color: var(--muted);
+    font-size: 0.9em;
+}
+
+.job-shell .primary-button {
+    margin-top: 20px;
+}

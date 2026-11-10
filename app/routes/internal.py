@@ -1,15 +1,19 @@
 import json
 import os
 import re
+import time
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.models.curriculum import Curriculum, CurriculumNode
 from app.models.lesson import PaginatedLesson
 from app.services.curriculum import find_node_by_id, generate_curriculum
+from app.services.jobs import DONE, get_job, start_job
 from app.services.lesson import generate_paginated_lesson
 from app.services.rate_limit import check_and_increment
 from utils.markdown_render import render_markdown
@@ -27,6 +31,7 @@ CONFIG_DIR = ROOT / "app" / "config"
 SCENARIO_FILE = CONFIG_DIR / "curriculum_scenarios.json"
 
 DATA_DIR = ROOT / "data" / "generations"
+LESSON_DATA_DIR = DATA_DIR / "lessons"
 
 MODEL = os.getenv("LESSON_MODEL", "openai-gpt-6-luna")
 
@@ -72,8 +77,7 @@ def save_lesson(
     curriculum_file_name: str,
 ) -> Path:
     prompt_version = os.getenv('LESSON_PROMPT_VERSION', None)
-    
-    LESSON_DATA_DIR = DATA_DIR / "lessons"
+
     LESSON_DATA_DIR.mkdir(parents=True, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -104,20 +108,41 @@ def validate_length(value: str, field: str, maximum: int) -> None:
         )
 
 
-def resolve_generation_path(filename: str) -> Path:
-    """Resolve a user-supplied filename inside DATA_DIR, rejecting traversal."""
+def resolve_generation_path(filename: str, directory: Path | None = None) -> Path:
+    """Resolve a user-supplied filename inside `directory` (default DATA_DIR),
+    rejecting traversal."""
+    if directory is None:
+        directory = DATA_DIR
+
     if filename != Path(filename).name:
-        raise HTTPException(status_code=400, detail="Invalid curriculum filename.")
+        raise HTTPException(status_code=400, detail="Invalid filename.")
 
-    candidate = (DATA_DIR / filename).resolve()
+    candidate = (directory / filename).resolve()
 
-    if candidate.parent != DATA_DIR.resolve():
-        raise HTTPException(status_code=400, detail="Invalid curriculum filename.")
+    if candidate.parent != directory.resolve():
+        raise HTTPException(status_code=400, detail="Invalid filename.")
 
     if not candidate.is_file():
-        raise HTTPException(status_code=404, detail="Curriculum not found.")
+        raise HTTPException(status_code=404, detail="File not found.")
 
     return candidate
+
+
+def load_curriculum(filename: str) -> Curriculum:
+    path = resolve_generation_path(filename)
+    return Curriculum.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def redirect_to_job(job_id: str) -> RedirectResponse:
+    # 303 makes the browser follow up with a GET, so refreshing the job page
+    # never re-submits the form.
+    return RedirectResponse(f"/internal/jobs/{job_id}", status_code=303)
+
+
+JOB_MESSAGES = {
+    "curriculum": "Generating your curriculum, usually 30–60 seconds",
+    "lesson": "Generating your lesson, usually 30–60 seconds",
+}
 
 
 @router.get("/internal")
@@ -135,45 +160,67 @@ def internal_home(request: Request):
 
 @router.post("/internal/curriculum")
 def create_curriculum(
-    request: Request,
     topic: str = Form(...),
     optional_context: str = Form(""),
 ):
+    # Validation and the rate limit run now, so bad input fails immediately
+    # instead of inside the background job.
     validate_length(topic, "topic", MAX_TOPIC_LENGTH)
     validate_length(optional_context, "optional_context", MAX_CONTEXT_LENGTH)
     check_and_increment()
 
-    curriculum = generate_curriculum(
-        topic=topic,
-        model=MODEL,
-        optional_context=optional_context,
-    )
+    def work() -> str:
+        curriculum = generate_curriculum(
+            topic=topic,
+            model=MODEL,
+            optional_context=optional_context,
+        )
+        saved_path = save_curriculum(curriculum=curriculum, topic=topic, model=MODEL)
+        return f"/internal/curriculum/{saved_path.name}"
 
-    saved_path = save_curriculum(curriculum=curriculum, topic=topic, model=MODEL)
+    job = start_job("curriculum", work)
+    return redirect_to_job(job.id)
+
+
+@router.get("/internal/curriculum/{curriculum_filename}")
+def view_curriculum(
+    request: Request,
+    curriculum_filename: str,
+    lesson: str | None = None,
+    node: str | None = None,
+):
+    curriculum = load_curriculum(curriculum_filename)
+
+    context = {
+        "curriculum": curriculum,
+        "curriculum_filename": curriculum_filename,
+        "lesson": None,
+    }
+
+    if lesson is not None:
+        lesson_path = resolve_generation_path(lesson, LESSON_DATA_DIR)
+        context["lesson"] = PaginatedLesson.model_validate_json(
+            lesson_path.read_text(encoding="utf-8")
+        )
+        context["lesson_filename"] = lesson
+    if node is not None:
+        context["selected_node_id"] = node
 
     return templates.TemplateResponse(
         request=request,
         name="curriculum.html",
-        context={
-            "curriculum": curriculum,
-            "curriculum_filename": saved_path.name,
-            "lesson": None,
-        },
+        context=context,
     )
 
 
 @router.post("/internal/lesson")
 def create_lesson(
-    request: Request,
     curriculum_filename: str = Form(...),
     node_id: str = Form(...),
     detail_level: str = Form("standard"),
 ):
     validate_detail_level(detail_level)
-    curriculum_path = resolve_generation_path(curriculum_filename)
-
-    curriculum_string = curriculum_path.read_text(encoding="utf-8")
-    curriculum = Curriculum.model_validate_json(curriculum_string)
+    curriculum = load_curriculum(curriculum_filename)
 
     target_node = None
 
@@ -186,28 +233,57 @@ def create_lesson(
 
     check_and_increment()
 
-    lesson = generate_paginated_lesson(
-        model=MODEL,
-        curriculum=curriculum,
-        node=target_node,
-        detail_level=detail_level,
-    )
+    def work() -> str:
+        lesson = generate_paginated_lesson(
+            model=MODEL,
+            curriculum=curriculum,
+            node=target_node,
+            detail_level=detail_level,
+        )
+        saved_path = save_lesson(
+            lesson=lesson,
+            node=target_node,
+            model=MODEL,
+            curriculum_file_name=curriculum_filename,
+        )
+        query = urlencode({"lesson": saved_path.name, "node": node_id})
+        return f"/internal/curriculum/{curriculum_filename}?{query}"
 
-    saved_path = save_lesson(
-        lesson=lesson,
-        node=target_node,
-        model=MODEL,
-        curriculum_file_name=curriculum_filename,
-    )
+    job = start_job("lesson", work)
+    return redirect_to_job(job.id)
+
+
+@router.get("/internal/jobs/{job_id}")
+def view_job(request: Request, job_id: str):
+    job = get_job(job_id)
+
+    # Already finished (e.g. the user came back after switching apps):
+    # skip the waiting page and go straight to the result.
+    if job is not None and job.status == DONE:
+        return RedirectResponse(job.result_url, status_code=303)
 
     return templates.TemplateResponse(
         request=request,
-        name="curriculum.html",
+        name="job.html",
         context={
-            "curriculum": curriculum,
-            "curriculum_filename": curriculum_filename,
-            "lesson": lesson,
-            "lesson_filename": saved_path.name,
-            "selected_node_id": node_id,
+            "job": job,
+            "message": JOB_MESSAGES.get(job.kind, "Working…") if job else None,
+            # Sent as "seconds so far" rather than a timestamp, so the timer is
+            # right even if the phone's clock disagrees with the server's.
+            "elapsed_seconds": int(time.time() - job.started_at) if job else 0,
         },
+        status_code=200 if job else 404,
     )
+
+
+@router.get("/internal/jobs/{job_id}/status")
+def job_status(job_id: str):
+    job = get_job(job_id)
+    if job is None:
+        return JSONResponse({"status": "missing"}, status_code=404)
+
+    return {
+        "status": job.status,
+        "result_url": job.result_url,
+        "error": job.error,
+    }
