@@ -1,0 +1,74 @@
+/* Collapsible curriculum pane (desktop only).
+   sidebar.js toggles .sidebar-collapsed on main.app and creates the
+   .sidebar-reopen button. Below 981px the existing single-column layout
+   applies and none of this is shown. */
+
+.sidebar-toggle,
+.sidebar-reopen {
+    display: none;
+}
+
+@media (min-width: 981px) {
+    .curriculum-inner {
+        position: relative;
+    }
+
+    /* Sits on the same line as .pane-kicker, at the pane's right edge. */
+    .sidebar-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        position: absolute;
+        top: -6px;
+        right: 0;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 12px;
+        padding: 3px 8px;
+        cursor: pointer;
+    }
+
+    .sidebar-toggle:hover,
+    .sidebar-reopen:hover {
+        border-color: var(--line-strong);
+        color: var(--text);
+    }
+
+    .sidebar-toggle:focus-visible,
+    .sidebar-reopen:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    /* Collapsed: one column, pane (and its generate form) hidden but kept in the DOM. */
+    .app.sidebar-collapsed {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .app.sidebar-collapsed .curriculum-pane {
+        display: none;
+    }
+
+    /* sidebar.js appends the reopen button to <body> after main.app. */
+    .app.sidebar-collapsed ~ .sidebar-reopen {
+        display: inline-flex;
+    }
+
+    .sidebar-reopen {
+        position: fixed;
+        top: 60px;
+        left: 16px;
+        z-index: 20;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: #56524d;
+        padding: 6px 10px;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+    }
+}

@@ -23,6 +23,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ curriculum.title }}</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/sidebar.css">
+    <script src="/static/sidebar.js" defer></script>
 </head>
 
 <body>
@@ -40,6 +42,7 @@
         <aside class="curriculum-pane">
             <div class="curriculum-inner">
                 <div class="pane-kicker">Curriculum</div>
+                <button type="button" class="sidebar-toggle" aria-expanded="true" aria-label="Hide curriculum panel">Hide</button>
                 <h2 class="course-title">{{ curriculum.title }}</h2>
                 {% if curriculum.description %}
                 <div class="course-meta">{{ curriculum.description }}</div>
