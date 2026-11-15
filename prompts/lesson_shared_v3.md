@@ -69,6 +69,9 @@ anchored in concrete material.
   specific call, its values, and its result.
 * Use the learner's context. If optional_context names a language,
   framework, field, or goal, draw examples from it.
+* Keep the format of repeated artifacts (tool calls, payloads, code,
+  notation) consistent across all pages of the lesson. If a later page uses a
+  simplified form, say so.
 
 Specificity must not cost accuracy:
 

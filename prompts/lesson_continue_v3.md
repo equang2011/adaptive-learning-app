@@ -103,9 +103,16 @@ Use exactly this shape:
   concepts, per the Specificity rules, consistent with the lesson plan. If
   prior_page_summaries describe a running example, extend it with this page's
   concepts rather than starting a new, unrelated one.
+  If the sections already walk through the example step by step, do not
+  repeat that walkthrough in page.example. Use page.example for a different
+  case, such as a failure path or edge case, that extends the same running
+  example.
 * page_summary is internal coordination metadata describing what this page
   actually taught. Include enough detail of the example (names, values,
   setup) that a later page can continue it.
+  If the page shows a structured artifact (a tool call, payload, or code
+  signature), record its exact field names in page_summary so later pages
+  reuse the same shape.
 * Keep page_summary concise.
 
 If current_page is less than total_pages:

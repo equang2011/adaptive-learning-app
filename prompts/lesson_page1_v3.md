@@ -201,11 +201,18 @@ exactly one entry describing the single page.
   input and output of each step. For non-technical topics, use a realistic
   case, scenario, or calculation. Prefer a running example that later pages
   can extend over one that only works for this page.
+  If the sections already walk through the example step by step, do not
+  repeat that walkthrough in page.example. Use page.example for a different
+  case, such as a failure path or edge case, that extends the same running
+  example.
 * page_summary is internal coordination metadata.
 * page_summary should concisely state what Page 1 actually taught, including
   important concepts, distinctions, or examples needed to avoid repetition or
   contradiction on later pages. Include enough detail of the example (names,
   values, setup) that a later page can continue it.
+  If the page shows a structured artifact (a tool call, payload, or code
+  signature), record its exact field names in page_summary so later pages
+  reuse the same shape.
 * Keep page_summary brief. Do not repeat Page 1 in full.
 * key_takeaways must be an empty list unless total_pages equals 1, in which
   case it must contain 3–5 concise statements covering the complete lesson.
