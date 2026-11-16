@@ -1,0 +1,64 @@
+/* "Up next" card added by up-next.js to the last lesson page. */
+
+/* The card replaces the disabled "End of lesson" button. */
+.has-up-next #bottom-next:disabled {
+    display: none;
+}
+
+.up-next {
+    margin-top: 32px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.up-next-label {
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .085em;
+    font-size: 10px;
+    font-weight: 650;
+    margin-bottom: 10px;
+}
+
+/* Next lesson's title. Plain text, so long titles wrap naturally. */
+.up-next-title {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 650;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+/* Matches .next-button. */
+.up-next-button {
+    border: 1px solid #252525;
+    background: #252525;
+    color: white;
+    border-radius: 6px;
+    padding: 9px 13px;
+    cursor: pointer;
+}
+
+.up-next-button:disabled {
+    background: #b7b2ab;
+    border-color: #b7b2ab;
+    cursor: default;
+}
+
+.up-next-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.up-next-hint,
+.up-next-end {
+    color: var(--muted);
+    margin: 10px 0 0;
+    line-height: 1.5;
+}
+
+.up-next-end {
+    margin-top: 0;
+}
