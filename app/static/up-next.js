@@ -48,16 +48,25 @@
         label.className = "up-next-label";
         label.textContent = "Up next";
 
+        var heading = document.createElement("p");
+        heading.className = "up-next-title";
+        heading.id = "up-next-title";
+        heading.textContent = title;
+
+        var BUTTON_TEXT = "Start lesson →";
         var button = document.createElement("button");
         button.type = "button";
         button.className = "up-next-button";
-        button.textContent = title;
+        button.textContent = BUTTON_TEXT;
+        // Screen readers hear which lesson the button starts.
+        button.setAttribute("aria-describedby", "up-next-title");
 
         var hint = document.createElement("p");
         hint.className = "up-next-hint";
         hint.textContent = hintText();
 
         block.appendChild(label);
+        block.appendChild(heading);
         block.appendChild(button);
         block.appendChild(hint);
 
@@ -72,7 +81,7 @@
         function reset() {
             current.checked = true;
             button.disabled = false;
-            button.textContent = title;
+            button.textContent = BUTTON_TEXT;
         }
 
         button.addEventListener("click", function () {

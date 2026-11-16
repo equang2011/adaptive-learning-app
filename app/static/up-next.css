@@ -22,7 +22,16 @@
     margin-bottom: 10px;
 }
 
-/* Matches .next-button, but lets long lesson titles wrap. */
+/* Next lesson's title. Plain text, so long titles wrap naturally. */
+.up-next-title {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 650;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+/* Matches .next-button. */
 .up-next-button {
     border: 1px solid #252525;
     background: #252525;
@@ -30,11 +39,6 @@
     border-radius: 6px;
     padding: 9px 13px;
     cursor: pointer;
-    white-space: normal;
-    text-align: left;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-    line-height: 1.4;
 }
 
 .up-next-button:disabled {
