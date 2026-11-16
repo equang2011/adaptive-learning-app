@@ -24,6 +24,9 @@
     <title>{{ curriculum.title }}</title>
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="stylesheet" href="/static/sidebar.css">
+    <link rel="stylesheet" href="/static/lesson-mobile.css">
+    <link rel="stylesheet" href="/static/up-next.css">
+    <script src="/static/up-next.js" defer></script>
     <script src="/static/sidebar.js" defer></script>
 </head>
 
@@ -38,8 +41,8 @@
         </div>
     </header>
 
-    <main class="app">
-        <aside class="curriculum-pane">
+    <main class="app{% if lesson %} has-lesson{% endif %}">
+        <aside class="curriculum-pane" id="curriculum">
             <div class="curriculum-inner">
                 <div class="pane-kicker">Curriculum</div>
                 <button type="button" class="sidebar-toggle" aria-expanded="true" aria-label="Hide curriculum panel">Hide</button>
@@ -126,6 +129,7 @@
                 <div class="bottom-pager">
                     <button type="button" class="next-button" id="bottom-next">Next page →</button>
                 </div>
+                <a class="choose-another-lesson" href="#curriculum">Choose another lesson ↓</a>
 
                 <script>
                     (function () {
@@ -137,6 +141,7 @@
                         const bottomNextBtn = document.getElementById("bottom-next");
                         const indicator = document.getElementById("page-indicator");
                         let current = 0;
+                        let firstRender = true;
 
                         function render() {
                             pages.forEach((page, index) => {
@@ -152,7 +157,12 @@
                                 ? "End of lesson"
                                 : `Continue to page ${current + 2} →`;
                             indicator.textContent = `Page ${current + 1} of ${pages.length}`;
-                            window.scrollTo(0, 0);
+                            if (firstRender) {
+                                firstRender = false;
+                            } else {
+                                document.querySelector(".lesson-wrap").scrollIntoView({ block: "start" });
+                                window.scrollTo(0, window.scrollY);
+                            }
                         }
 
                         function goNext() {

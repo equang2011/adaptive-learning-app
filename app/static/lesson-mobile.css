@@ -1,0 +1,44 @@
+/* Lesson-first layout on mobile, and scroll targets that clear the sticky
+   48px .topbar. Breakpoint matches styles.css (max-width: 980px);
+   sidebar.css uses min-width: 981px, so the two never overlap. */
+
+/* The pager scrolls .lesson-wrap into view on page changes. */
+.lesson-wrap {
+    scroll-margin-top: 64px;
+}
+
+/* Target of the "Choose another lesson" link. The pane has its own top
+   padding, so clearing the topbar height is enough. */
+#curriculum {
+    scroll-margin-top: 48px;
+}
+
+.choose-another-lesson {
+    display: none;
+}
+
+@media (max-width: 980px) {
+    /* With a lesson shown, put it before the curriculum. */
+    .app.has-lesson .lesson-pane {
+        order: -1;
+    }
+
+    /* Keep a divider between the two sections in the new order. */
+    .app.has-lesson .curriculum-pane {
+        border-bottom: 0;
+        border-top: 1px solid var(--line);
+    }
+
+    .choose-another-lesson {
+        display: inline-block;
+        margin-top: 20px;
+        color: var(--muted);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .choose-another-lesson:hover,
+    .choose-another-lesson:focus-visible {
+        color: var(--text);
+    }
+}
